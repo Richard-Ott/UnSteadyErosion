@@ -2,8 +2,8 @@ clear
 clc
 close all
 
-addpath('..\..\..\CRONUS cosmo calculation\cronus 3.0\online-calculators-v3\')
-addpath('..\..\..\Richards functions\Matlab MCMC ensemble sampler\')
+addpath('.\online-calculators-v3\')
+addpath('.\Matlab MCMC ensemble sampler\')
 
 nWalks = 50;                              % how many chains per sample?
 
@@ -60,7 +60,7 @@ logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == siz
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e7,'ThinChain',10,'burnin',.2);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},5e6,'ThinChain',10,'burnin',.2,'StepSize',2.5);
 toc
 models = single(models); logLike = single(logLike); % save some memory
 %% Autocorrelation
