@@ -15,20 +15,18 @@ lon= repmat(10,n,1);
 altitude=repmat(500,n,1);
 
 % erosion scenario to recover
-t1 = [1500];      % step change timing
+t1 = [1500];                            % step change timing
 e1 = [20,50,100,300,50,400,50];         % old erosion rates of different catchments
-e2 = [1000,2000,5000,200,50,100,500];   % new erosion rates of catchments
+chg = 10;                               % increase of erosion rate at time t
  
 %% Priors -----------------------------------------------------------------
 T =  [1,10e3];      % time of step change in yrs [min,max]
 E1 = [10,5e2];      % old erosion rate in mm/ka  [min,max]
-E2 = [100,10e3];    % new erosion rates in mm/ka [min,max]
+CHG = [0.1 100];     % increase [ ] 
 
 % calculate prior ranges
-prior_range = [repmat(E1, n, 1); repmat(E2, n, 1)];
-prior_range = [T; prior_range];
-var_names = ['T1', arrayfun(@(x) sprintf('E1_sample%d', x), 1:n, 'UniformOutput', false), ...
-         arrayfun(@(x) sprintf('E2_sample%d', x), 1:n, 'UniformOutput', false)];
+prior_range = [T; repmat(E1, n, 1); CHG];
+var_names = ['T1', arrayfun(@(x) sprintf('E1_sample%d', x), 1:n, 'UniformOutput', false),'ChangeFactor'];
 
 %% Constants
 
@@ -44,11 +42,11 @@ mini  = initialmodel_flatprior(prior_range,nWalks);
 
 %% Forward model
 
-forward_model = @(m) Nforward_E_discretized_multisample(m(2:end),[m(1); 0],sp,consts,Nmu);
+forward_model = @(m) Nforward_E_change_multisample(m(2:end-1),[m(1); 0],m(end),sp,consts,Nmu);
 
 %% generate test data to see if inversion can succesfully identify these data
 
-mtest = [t1'; e1'; e2'];
+mtest = [t1'; e1'; chg'];
 testObs = forward_model(mtest);
 
 %% log likelihood function
@@ -56,13 +54,13 @@ testObs = forward_model(mtest);
 % but has higher precision because it avoids truncation errors associated with calling
 % log(exp(xxx)).
 lognormpdf = @(x,mu,sigma)-0.5*((x-mu)./sigma).^2  -log(sqrt(2*pi).*sigma);
-logLike    = @(m) sum(lognormpdf(testObs, forward_model(m), testObs*0.08));
+logLike    = @(m) sum(lognormpdf(testObs, forward_model(m), testObs.*0.08));
 
 logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == size(prior_range,1);
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},5e7,'ThinChain',10,'burnin',.2);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e7,'ThinChain',10,'burnin',.2);
 toc
 models = single(models); logLike = single(logLike); % save some memory
 %% Autocorrelation
@@ -112,5 +110,5 @@ best_pred = forward_model(best_model);
 difference = testObs - best_pred
 
 %%
-exportgraphics(h2,'testMCMC_chains.png','Resolution',300)
-exportgraphics(h3,'testMCMC_barplot.png','Resolution',300)
+exportgraphics(h2,'testMCMC_chains_change.png','Resolution',300)
+exportgraphics(h3,'testMCMC_barplot_change.png','Resolution',300)

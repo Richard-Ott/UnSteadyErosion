@@ -1,12 +1,12 @@
-function N = Nforward_E_discretized_multisample(E,T,sp,consts,Nmu)
+function N = Nforward_E_change_multisample(E,T,CHG,sp,consts,Nmu)
 % This function calculates concentrations N10 and N14 for mutiple step 
 % changes in erosion and for multiple samples at once.
 %
 % Input:
-%       - E: n x m vector with m erosion rates in mm/ka from old to current
-%       for n samples
+%       - E: n x 1 vector with erosion rates in mm/ka for n samples
 %       - T: 1 x m vector of erosion rate step change timings (yrs BP)
 %       from old to young
+%       - CHG: 1 x m change factors of erosion rates at times T
 %       - sp: sample specific parameters (Pspal & pressure)
 %       - consts: the consts_v3.mat file from Cronus v3
 %       - precalculated muon production rates from Cronus v3 (Nmu.mat)
@@ -17,12 +17,10 @@ function N = Nforward_E_discretized_multisample(E,T,sp,consts,Nmu)
 
 nSamp = length(sp.P10spal);
 
-% THE INPUT SIZES ABOVE ARE INCORRECT. THIS FUNCTION IS ADAPTED TO RUN WITH
-% A SINGLE (n x m,1) EROSION VECTOR AS INPUT.
-% ITS FASTER TO EXECUTE IN THE INVERSION WITH ONE LINE OF CODE HERE AND REARRANGE
-% THE ARRAY INSTEAD OF BUILDING A WRAPPER FUNCTION OR USING A CELL ARRAY AS
-% INVERSION FUNCTION INPUT. SO HERE IT GOES:
-E = reshape(E,[nSamp, length(T)]);
+% make matrix of erosion rates for different time steps by multiplying E
+% with the change factors
+E = [E, repmat(E,1,length(CHG))];
+E(:,2:end) = E(:,2:end) * diag(CHG);
 
 E = E./1e4;   % convert to cm/a
 
@@ -71,7 +69,7 @@ for i = 1:2
             % muon production
             P10(:,2) = intNmu(E(:,j).*rho,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N10quartz); 
             P14(:,2) = intNmu(E(:,j).*rho,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N14quartz); 
-
+            
             if any(isnan(P10(:,2)))   % this is necessary for very fast erosion rates that surpass the pre-calculated rates in Cronus
                 P10(:,2) = zeros(nSamp,1);
                 P14(:,2) = zeros(nSamp,1);
