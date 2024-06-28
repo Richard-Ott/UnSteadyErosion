@@ -15,9 +15,9 @@ lon= repmat(10,n,1);
 altitude=repmat(500,n,1);
 
 % erosion scenario to recover
-t1 = [1500];                            % step change timing
-e1 = [20,50,100,300,50,400,50];         % old erosion rates of different catchments
-chg = 10;                               % increase of erosion rate at time t
+t1 = [500];                            % step change timing
+e1 = [20,50,100,50,60,80,100];         % old erosion rates of different catchments
+chg = 20;                               % increase of erosion rate at time t
  
 %% Priors -----------------------------------------------------------------
 T =  [1,10e3];      % time of step change in yrs [min,max]

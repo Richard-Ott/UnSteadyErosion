@@ -8,6 +8,10 @@ addpath('C:\Users\rott\OneDrive - UvA\Richard\PhD_ETH\matlab\CRONUS cosmo calcul
 
 sp.pressure = ERA40atm(lat, lon, altitude);  % atmospheric pressure
 
+if isrow(sp.pressure)   % make sure its a column vector
+    sp.pressure = sp.pressure';
+end
+
 P10_SLHL = consts.refP_St(4);                % Stone scaling ref spallation production
 P14_SLHL = consts.refP_St(5);
 

@@ -62,7 +62,7 @@ logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == siz
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e8,'ThinChain',10,'burnin',.2,'StepSize',5);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e6,'ThinChain',10,'burnin',.2,'StepSize',5);
 toc
 
 %% Autocorrelation
@@ -93,12 +93,12 @@ h2 = chainplot(models,var_names,prior_range);
 
 %% Corner plot of parameters
 
-% figure
-% ecornerplot(out,'ks',true,'color',[.3 .3 .3])
+h3 = figure;
+ecornerplot(models,'ks',true,'color',[.3 .3 .3])
 
 %% Barplot of parameters
 
-h3 = barplot_parameters(models,var_names);
+h4 = barplot_parameters(models,var_names);
 
 %% Best-fit model
 posterior_like = squeeze(logLike(2,:,:));
@@ -114,7 +114,11 @@ best_model = models(:,best_index,best_walker_index(best_index));
 best_pred = forward_model(best_model);
 difference = Nobs - best_pred
 
-%%
-exportgraphics(h2,'testMCMC_chains.png','Resolution',300)
-exportgraphics(h3,'testMCMC_barplot.png','Resolution',300)
+h5 = conc_modelledVSobserved(best_pred,data.N10,data.N10sigma,data.N14,data.N14sigma);
 
+%%
+exportgraphics(h2,'WC_MCMC_chains.png','Resolution',300)
+exportgraphics(h4,'WC_MCMC_cornerplot.png','Resolution',300)
+exportgraphics(h4,'WC_MCMC_barplot.png','Resolution',300)
+
+% save("WC_results")

@@ -67,8 +67,8 @@ for i = 1:2
                 (1 - exp(-beta14.*T_time_spans(j)));
         else 
             % muon production
-            P10(:,2) = intNmu(E(:,j).*rho,sp.pressure',Nmu.pp,Nmu.logee,Nmu.N10quartz); 
-            P14(:,2) = intNmu(E(:,j).*rho,sp.pressure',Nmu.pp,Nmu.logee,Nmu.N14quartz); 
+            P10(:,2) = intNmu(E(:,j).*rho,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N10quartz); 
+            P14(:,2) = intNmu(E(:,j).*rho,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N14quartz); 
             
             if any(isnan(P10(:,2)))   % this is necessary for very fast erosion rates that surpass the pre-calculated rates in Cronus
                 P10(:,2) = zeros(nSamp,1);
