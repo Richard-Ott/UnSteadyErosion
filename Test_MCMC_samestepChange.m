@@ -15,18 +15,18 @@ lon= repmat(10,n,1);
 altitude=repmat(500,n,1);
 
 % erosion scenario to recover
-t1 = [500];                            % step change timing
+t1 = 500;                            % step change timing
 e1 = [20,50,100,50,60,80,100];         % old erosion rates of different catchments
 chg = 20;                               % increase of erosion rate at time t
  
 %% Priors -----------------------------------------------------------------
 T =  [1,10e3];      % time of step change in yrs [min,max]
 E1 = [10,5e2];      % old erosion rate in mm/ka  [min,max]
-CHG = [0.1 100];     % increase [ ] 
+CHG = [0.1 100];     % change factor [ ] 
 
 % calculate prior ranges
 prior_range = [T; repmat(E1, n, 1); CHG];
-var_names = ['T1', arrayfun(@(x) sprintf('E1_sample%d', x), 1:n, 'UniformOutput', false),'ChangeFactor'];
+var_names = ['T1', arrayfun(@(x) sprintf('E1sample%d', x), 1:n, 'UniformOutput', false),'ChangeFactor'];
 
 %% Constants
 
@@ -42,12 +42,14 @@ mini  = initialmodel_flatprior(prior_range,nWalks);
 
 %% Forward model
 
-forward_model = @(m) Nforward_E_change_multisample(m(2:end-1),[m(1); 0],m(end),sp,consts,Nmu);
+forward_model = @(m) Nforward_discretized(m(2:end-1),[m(1); 0],sp,consts,Nmu,'samestep',m(end));
 
 %% generate test data to see if inversion can succesfully identify these data
 
 mtest = [t1'; e1'; chg'];
 testObs = forward_model(mtest);
+
+forward_model(mtest) - forward_model2(mtest)
 
 %% log likelihood function
 % First we define a helper function equivalent to calling log(normpdf(x,mu,sigma))
@@ -60,7 +62,7 @@ logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == siz
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},5e6,'ThinChain',10,'burnin',.2,'StepSize',2.5);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e6,'ThinChain',100,'burnin',.2,'StepSize',2.5);
 toc
 models = single(models); logLike = single(logLike); % save some memory
 %% Autocorrelation
@@ -89,12 +91,12 @@ h2 = chainplot(models,var_names,prior_range,mtest);
 
 %% Corner plot of parameters
 
-% figure
-% ecornerplot(out,'ks',true,'color',[.3 .3 .3])
+h3 = figure;
+ecornerplot(models,'ks',true,'color',[.3 .3 .3],'name',var_names,"truevals",mtest)
 
 %% Barplot of parameters
 
-h3 = barplot_parameters(models,var_names,mtest);
+h4 = barplot_parameters(models,var_names,mtest);
 
 %% Best-fit model
 posterior_like = squeeze(logLike(2,:,:));
@@ -107,8 +109,10 @@ best_model = models(:,best_index,best_walker_index(best_index));
 %% Comparison best model and data
 
 best_pred = forward_model(best_model);
-difference = testObs - best_pred
+difference = testObs - best_pred %#ok<NOPTS>
+
+h5 = conc_modelledVSobserved(best_pred,testObs(1:n),testObs(1:n).*0.08,testObs(n+1:end),testObs(n+1:end)*0.08);
 
 %%
-exportgraphics(h2,'testMCMC_chains_change.png','Resolution',300)
-exportgraphics(h3,'testMCMC_barplot_change.png','Resolution',300)
+% exportgraphics(h2,'testMCMC_chains_change.png','Resolution',300)
+% exportgraphics(h4,'testMCMC_barplot_change.png','Resolution',300)

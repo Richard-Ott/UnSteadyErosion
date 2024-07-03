@@ -17,7 +17,7 @@ for i = 1:nSamp
     errorbar(N10(i),N14(i),dN14(i),dN14(i),dN10(i),dN10(i),'Color',cc(i,:));
 
     % plot best model
-    plot(N10m(i),N14m(i),'p',"Color",cc(i,:));
+    plot(N10m(i),N14m(i),'p',"Color",cc(i,:),'MarkerSize',15);
 
 end
 

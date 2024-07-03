@@ -49,7 +49,7 @@ mini  = initialmodel_flatprior(prior_range,nWalks);
 
 %% Forward model
 
-forward_model = @(m) Nforward_E_change_multisample(m(2:end-1),[m(1); 0],m(end),sp,consts,Nmu);
+forward_model = @(m) Nforward_discretized(m(2:end-1),[m(1); 0],m(end),sp,consts,Nmu,'step');
 
 %% log likelihood function
 % First we define a helper function equivalent to calling log(normpdf(x,mu,sigma))
@@ -62,7 +62,7 @@ logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == siz
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e6,'ThinChain',10,'burnin',.2,'StepSize',5);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},2e6,'ThinChain',10,'burnin',.2,'StepSize',5);
 toc
 
 %% Autocorrelation
@@ -117,8 +117,8 @@ difference = Nobs - best_pred
 h5 = conc_modelledVSobserved(best_pred,data.N10,data.N10sigma,data.N14,data.N14sigma);
 
 %%
-exportgraphics(h2,'WC_MCMC_chains.png','Resolution',300)
-exportgraphics(h4,'WC_MCMC_cornerplot.png','Resolution',300)
-exportgraphics(h4,'WC_MCMC_barplot.png','Resolution',300)
+% exportgraphics(h2,'WC_MCMC_chains.png','Resolution',300)
+% exportgraphics(h4,'WC_MCMC_cornerplot.png','Resolution',300)
+% exportgraphics(h4,'WC_MCMC_barplot.png','Resolution',300)
 
 % save("WC_results")

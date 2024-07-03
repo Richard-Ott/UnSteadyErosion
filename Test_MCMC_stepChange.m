@@ -22,7 +22,7 @@ e2 = [1000,2000,5000,200,50,100,500];   % new erosion rates of catchments
 %% Priors -----------------------------------------------------------------
 T =  [1,10e3];      % time of step change in yrs [min,max]
 E1 = [10,5e2];      % old erosion rate in mm/ka  [min,max]
-E2 = [100,10e3];    % new erosion rates in mm/ka [min,max]
+E2 = [10,10e3];      % new erosion rates in mm/ka [min,max]
 
 % calculate prior ranges
 prior_range = [repmat(E1, n, 1); repmat(E2, n, 1)];
@@ -44,7 +44,7 @@ mini  = initialmodel_flatprior(prior_range,nWalks);
 
 %% Forward model
 
-forward_model = @(m) Nforward_E_discretized_multisample(m(2:end),[m(1); 0],sp,consts,Nmu);
+forward_model = @(m) Nforward_discretized(m(2:end),[m(1); 0],sp,consts,Nmu,'step');
 
 %% generate test data to see if inversion can succesfully identify these data
 
@@ -62,7 +62,7 @@ logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == siz
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e7,'ThinChain',10,'burnin',.2);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e6,'ThinChain',10,'burnin',.2);
 toc
 models = single(models); logLike = single(logLike); % save some memory
 %% Autocorrelation
@@ -112,5 +112,5 @@ best_pred = forward_model(best_model);
 difference = testObs - best_pred
 
 %%
-exportgraphics(h2,'testMCMC_chains.png','Resolution',300)
-exportgraphics(h3,'testMCMC_barplot.png','Resolution',300)
+% exportgraphics(h2,'testMCMC_chains.png','Resolution',300)
+% exportgraphics(h3,'testMCMC_barplot.png','Resolution',300)

@@ -54,6 +54,7 @@ p.addOptional('scatter',nan,@islogical);
 p.addOptional('fullmatrix',false,@islogical);
 p.addOptional('color',[1 1 1]*.5,@(x)all(size(x)==[1 3]))
 p.addOptional('ess',[]);
+p.addOptional('truevals',[]);
 % p.addOptional('truth',[fa],@isnumeric);
 p.parse(varargin{:});
 p=p.Results;
@@ -129,6 +130,10 @@ for r=1:M
             fill(X,F,p.color,'edgecolor','none')
             set(gca,'ytick',[],'YLim',[0 max(F)*1.1])
             set(gca,'XGrid',p.grid)
+
+            if~isempty(p.truevals)
+                xline(p.truevals(r),'k--')
+            end
         else
             if p.scatter
                 plot(m(:,c),m(:,r),'.','color',p.color)
