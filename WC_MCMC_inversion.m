@@ -67,7 +67,7 @@ logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == siz
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},2e6,'ThinChain',5,'burnin',.2,'StepSize',2.5);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e6,'ThinChain',5,'burnin',.2,'StepSize',2.5);
 toc
 models = single(models); logLike = single(logLike); % save some memory
 
@@ -78,17 +78,6 @@ posterior_like = squeeze(logLike(2,:,:));
 [best_model_like, best_index] = max(best_walker_like);
 best_model = models(:,best_index,best_walker_index(best_index));
 best_pred = forward_model(best_model);
-
-%% Autocorrelation
-
-figure
-[C,lags,ESS]=eacorr(models);
-plot(lags,C,'.-',lags([1 end]),[0 0],'k');
-grid on
-xlabel('lags')
-ylabel('autocorrelation');
-text(lags(end),0,sprintf('Effective Sample Size (ESS): %.0f_ ',ceil(mean(ESS))),'verticalalignment','bottom','horizontalalignment','right')
-title('Markov Chain Auto Correlation')
 
 %% Autocorrelation
 
