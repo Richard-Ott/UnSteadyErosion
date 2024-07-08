@@ -1,4 +1,4 @@
-function N = Nforward_wrapper(model,sp,consts,Nmu,scenario,nsteps)
+function N = Nforward_wrapper(model,sp,consts,Nmu,scenario,nsteps,Nlogical)
 % This is a wrapper function for Nforward_discretized for easy use with the
 % MCMC algorithm.
 % Richard Ott, 2024
@@ -15,6 +15,8 @@ function N = Nforward_wrapper(model,sp,consts,Nmu,scenario,nsteps)
 %               factor
 %               - 'spike': spikes of soil loss
 %       - nsteps:  the number of step changes of spike erosion losses
+%       - Nlogical: a logical table n x 3 that shows which nuclides were
+%       measured for which sample (column order: 10Be, 14C, 26Al)
 %
 % Output:
 %       - N = [N10,N14]: concentrations at/g of 10Be and 14C
@@ -70,9 +72,10 @@ end
 %% run forward model
 
 if strcmp(scenario,'step')
-    N = Nforward_discretized(E,T,sp,consts,Nmu,scenario);
+    N = Nforward_discretized(E,T,sp,consts,Nmu,scenario,Nlogical);
 else
-    N = Nforward_discretized(E,T,sp,consts,Nmu,scenario,changevar);
+    N = Nforward_discretized(E,T,sp,consts,Nmu,scenario,Nlogical,changevar);
 end
+
 
 end

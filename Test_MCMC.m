@@ -6,7 +6,7 @@ addpath('.\online-calculators-v3\')
 addpath('.\Matlab MCMC ensemble sampler\')
 
 nWalks = 25;       % how many MCMC chains?
-export = 1;        % do you want to export the data and plots?
+export = 0;        % do you want to export the data and plots?
 filetag = 'test';  % filetag for export
 
 % choose one of these erosion scenarios: 
@@ -17,6 +17,7 @@ scenario = 'samebackground_spike';
 %% Test data. Use this to see if inversion can recover input
 n = 7;   % number of samples
 tdata = make_test_data(scenario,n);
+Nlogical = [true(n,2) false(n,1)];  % only 10Be and 14C
 
 %% Priors -----------------------------------------------------------------
 T =  [1,10e3];      % time of step change OR spike in yrs [min,max]
@@ -40,7 +41,7 @@ mini  = initialmodel_flatprior(prior_range,nWalks,2);
 
 %% Forward model (model parameters: time, erosion, CHG/Loss)
 
-forward_model = @(m) Nforward_wrapper(m,sp,consts,Nmu,scenario,tdata.steps);
+forward_model = @(m) Nforward_wrapper(m,sp,consts,Nmu,scenario,tdata.steps,Nlogical);
 
 %% generate test data to see if inversion can succesfully identify these data
 

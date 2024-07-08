@@ -27,17 +27,20 @@ alt = arrayfun(@(x) median(x.WSDEM.Z(:),'omitnan'), SAMS);
 
 %% Observations
 
-Nobs = [data.N10 ; data.N14];
-dNobs= [data.N10sigma; data.N14sigma];
+Nobs = [data.N10 ; data.N14; data.N26];
+dNobs= [data.N10sigma; data.N14sigma; data.N26sigma];
+
+Nlogical = [~isnan(data.N10) ~isnan(data.N14) ~isnan(data.N26)];
 
 for i = 1:length(scenarios)
 %% Priors -----------------------------------------------------------------
 T   = [1,10e3];      % time of step change in yrs [min,max]
 E1  = [10,3e2];      % old erosion rate in mm/ka  [min,max]
-CHG = [0.1 200];     % increase [ ] 
+CHG = [0.1 100];     % increase [ ] 
+LOSS = [0,200];     % loss of soil in cm [min,max], can be commented if no spike model
 
 % calculate prior ranges
-[prior_range,var_names] = make_prior_and_varnames(scenarios{i},T,E,LOSS,CHG,length(data.N10),nsteps);
+[prior_range,var_names] = make_prior_and_varnames(scenarios{i},T,E1,LOSS,CHG,length(data.N10),nsteps);
 
 %% Constants
 
@@ -53,7 +56,7 @@ mini  = initialmodel_flatprior(prior_range,nWalks);
 
 %% Forward model
 
-forward_model = @(m) Nforward_wrapper(m,sp,consts,Nmu,scenarios{i},tdata.steps);
+forward_model = @(m) Nforward_wrapper(m,sp,consts,Nmu,scenarios{i},tdata.steps,Nlogical);
 
 %% log likelihood function
 % First we define a helper function equivalent to calling log(normpdf(x,mu,sigma))

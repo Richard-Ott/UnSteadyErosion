@@ -14,10 +14,12 @@ end
 
 P10_SLHL = consts.refP_St(4);                % Stone scaling ref spallation production
 P14_SLHL = consts.refP_St(5);
+P26_SLHL = consts.refP_St(7);
 
 sf_St = (stone2000(lat,sp.pressure,1))';        % scaling factor
 
 sp.P10spal = sf_St .* P10_SLHL;              % site specific spallation production
 sp.P14spal = sf_St .* P14_SLHL;
+sp.P26spal = sf_St .* P26_SLHL;
 
 end

@@ -1,4 +1,4 @@
-function N = Nforward_discretized(E,T,sp,consts,Nmu,scenario,varargin)
+function N = Nforward_discretized(E,T,sp,consts,Nmu,scenario,Nlogical,varargin)
 % This function calculates concentrations N10 and N14 for mutiple step 
 % changes in erosion and for multiple samples at once.
 %
@@ -93,11 +93,20 @@ att_l_10(1) = consts.L_sp;          % spallation
 att_l_10(2) = consts.L_mu_atm(4);   % muon 
 att_l_14(1) = consts.L_sp;          % spallation
 att_l_14(2) = consts.L_mu_atm(5);   % muon 
+att_l_26(1) = consts.L_sp;          % spallation
+att_l_26(2) = consts.L_mu_atm(7);   % muon 
 
 % production rates 
 P10(:,1) = sp.P10spal; 
 P14(:,1) = sp.P14spal; 
+P26(:,1) = sp.P26spal; 
 
+% do we need to calculate Alumimium (currently I run 26Al as a separate,
+% assuming that it will be the least measured nuclide, so instead of
+% modyfying the current loop, I just add a new loop with an if statement)
+% taking Al into the main loop would be cleaner, but I'm trying to optimize
+% for speed in the inversion.
+Al = any(Nlogical(:,3));
 
 % calculate concentrations --------------------------------------------
 N10 = 0;
@@ -149,5 +158,36 @@ for i = 1:2
 end
  
 
-N = [N10;N14];
+if Al       % calculate Al separetely assuming that it will be used the least and we run code faster if we dont calculate this
+N26=0;
+    for i = 1:2 
+    N26i = 0;    
+    for j = 1:length(T)  % loop through erosion segments
+        beta26 = rho .* E(:,j) ./ att_l_26(i) + consts.l26;
+        if i==1
+            N26_segment = P26(:,1)./beta26 .* ...                    % production
+                exp(-(rho .* t_depths(:,j) ./ att_l_26(i))) .* ...    % depth cut-off
+                (1 - exp(-beta26.*T_time_spans(j)));              % time to develop the concentration profile
+        else 
+            % muon production
+            P26(:,2) = intNmu(E(:,j).*rho,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N26quartz); 
+            if any(isnan(P26(:,2)))   % this is necessary for very fast erosion rates that surpass the pre-calculated rates in Cronus
+                P26(:,2) = zeros(nSamp,1);
+            end
+            N26_segment = P26(:,2) .* ...                           % production, here now beta is needed because Cronus outputs total production
+                exp(-(rho .* t_depths(:,j) ./ att_l_26(2))) .* ...    % depth cut-off
+                (1 - exp(-beta26.*T_time_spans(:,j)));              % time to develop the concentration profile
+        end
+        N26i = N26i .* exp(-consts.l26.*T_time_spans(j)) + N26_segment; % add segments and don't forget decay
+    end
+    N26 = N26 + N26i;
+    end
+end
+
+if Al
+    Ncalculated = [N10;N14;N26];
+else
+    Ncalculated = [N10;N14; zeros(nSamp,1)];
+end
+N = Ncalculated(Nlogical);  % only pass on nuclide values that were measured
 end
