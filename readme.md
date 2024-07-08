@@ -3,11 +3,10 @@
 This toolbox has two main purposes: (1) provide forward models to calculate
 nuclide concentrations for unsteady erosion scenarios, and (2) provide inversion
 schemes to analyze data for these scenarios. The code is currently adapted to work
-for 10Be-14C paired nuclide measurements. However, the forward models can be used for
-single nuclide analysis and other nuclides such as Al can be easily added. All models
-can be run for a single sample as well as a suite of data. However, the inversion
-cannot constrain meaningful results for a single sample, because there are less
-data than parameters.
+for 10Be, 14C, and 26Al nuclide measurements (not all samples need all nuclides).
+All models can be run for a single sample as well as a suite of data. However, 
+the inversion cannot constrain meaningful results for a single sample, because there
+are less data than parameters.
 
 Currently 8 erosion scenarios are supported. There are two main scenario types:
 step-changes in erosion and erosion spikes. In step change models, the erosion rate
