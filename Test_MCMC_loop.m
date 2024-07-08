@@ -5,26 +5,29 @@ close all
 addpath('.\online-calculators-v3\')
 addpath('.\Matlab MCMC ensemble sampler\')
 
-nWalks = 25;       % how many MCMC chains?
-export = 1;        % do you want to export the data and plots?
-filetag = 'test';  % filetag for export
+
 
 % choose one of these erosion scenarios: 
 % 'step',  'samestep',  'samebackground_step', 'samebackground_samestep'
 % 'spike', 'samespike', 'samebackground_spike','samebackground_samespike'
-scenario = 'samebackground_spike'; 
 
+for i = 5
+nWalks = 30;       % how many MCMC chains?
+export = 1;        % do you want to export the data and plots?
+filetag = 'test';  % filetag for export
+scenarios = {'step', 'samestep', 'samebackground_step', 'samebackground_samestep',...
+    'spike', 'samespike', 'samebackground_spike', 'samebackground_samespike'}; 
 %% Test data. Use this to see if inversion can recover input
 n = 7;   % number of samples
-tdata = make_test_data(scenario,n);
+tdata = make_test_data(scenarios{i},n);
 
 %% Priors -----------------------------------------------------------------
 T =  [1,10e3];      % time of step change OR spike in yrs [min,max]
-E =  [10,5e2];      % range of expected erosion rates in mm/ka  [min,max]
+if i == 1; E = [10,5e3]; else; E = [10,5e2]; end    % range of expected erosion rates in mm/ka  [min,max]
 LOSS = [0,200];     % loss of soil in cm [min,max], can be commented if no spike model
 CHG  = [0, 50];     % change factor of erosion rate, can be commented if no samestep model
 
-[prior_range,var_names] = make_prior_and_varnames(scenario,T,E,LOSS,CHG,n,tdata.steps);
+[prior_range,var_names] = make_prior_and_varnames(scenarios{i},T,E,LOSS,CHG,n,tdata.steps);
 
 %% Constants
 
@@ -40,7 +43,7 @@ mini  = initialmodel_flatprior(prior_range,nWalks,2);
 
 %% Forward model (model parameters: time, erosion, CHG/Loss)
 
-forward_model = @(m) Nforward_wrapper(m,sp,consts,Nmu,scenario,tdata.steps);
+forward_model = @(m) Nforward_wrapper(m,sp,consts,Nmu,scenarios{i},tdata.steps);
 
 %% generate test data to see if inversion can succesfully identify these data
 
@@ -58,7 +61,7 @@ logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == siz
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e6,'ThinChain',5,'burnin',.2);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e8,'ThinChain',5,'burnin',.2,'ProgressBar',false);
 toc
 models = single(models); logLike = single(logLike); % save some memory
 
@@ -93,9 +96,13 @@ h5 = conc_modelledVSobserved(best_pred,testObs(1:n),testObs(1:n).*0.08,testObs(n
 %% Export
 
 if export
-    exportgraphics(h1,['./output/' filetag '_' scenario '_autocorrelation.png'],'Resolution',300)
-    exportgraphics(h2,['./output/' filetag '_' scenario '_chains.png'],'Resolution',300)
-    exportgraphics(h3,['./output/' filetag '_' scenario '_cornerplot.png'],'Resolution',300)
-    exportgraphics(h4,['./output/' filetag '_' scenario '_barplot.png'],'Resolution',300)
-    exportgraphics(h5,['./output/' filetag '_' scenario '_datafit.png'],'Resolution',300)
+    exportgraphics(h1,['./output/' filetag '_' scenarios{i} '_autocorrelation.png'],'Resolution',300)
+    exportgraphics(h2,['./output/' filetag '_' scenarios{i} '_chains.png'],'Resolution',300)
+    exportgraphics(h3,['./output/' filetag '_' scenarios{i} '_cornerplot.png'],'Resolution',300)
+    exportgraphics(h4,['./output/' filetag '_' scenarios{i} '_barplot.png'],'Resolution',300)
+    exportgraphics(h5,['./output/' filetag '_' scenarios{i} '_datafit.png'],'Resolution',300)
+end
+i
+clear
+close all
 end

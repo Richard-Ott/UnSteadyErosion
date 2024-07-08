@@ -7,7 +7,12 @@ addpath('.\Matlab MCMC ensemble sampler\')
 addpath('.\CosmoTools\')
 
 data = readtable('data\WCdata_RFO.xlsx'); % AMS data
-nWalks = 50;                              % how many chains per sample?
+nWalks = 30;                              % how many chains per sample?
+
+scenarios = {'samestep', 'samebackground_step', 'samebackground_samestep',...
+     'samespike', 'samebackground_spike', 'samebackground_samespike'}; 
+
+nsteps = 1;
 
 %% outline basins for binning (currently CosmoTools isnt properly integrated, should be improved)
 
@@ -24,16 +29,15 @@ alt = arrayfun(@(x) median(x.WSDEM.Z(:),'omitnan'), SAMS);
 
 Nobs = [data.N10 ; data.N14];
 dNobs= [data.N10sigma; data.N14sigma];
- 
+
+for i = 1:length(scenarios)
 %% Priors -----------------------------------------------------------------
-T =  [1,10e3];      % time of step change in yrs [min,max]
-E1 = [10,3e2];      % old erosion rate in mm/ka  [min,max]
-CHG = [0.1 200];    % increase [ ] 
+T   = [1,10e3];      % time of step change in yrs [min,max]
+E1  = [10,3e2];      % old erosion rate in mm/ka  [min,max]
+CHG = [0.1 200];     % increase [ ] 
 
 % calculate prior ranges
-n = length(Nobs)/2; % number of samples
-prior_range = [T; repmat(E1, n, 1); CHG];
-var_names = ['T1', arrayfun(@(x) sprintf('E1_sample%d', x), 1:n, 'UniformOutput', false),'ChangeFactor'];
+[prior_range,var_names] = make_prior_and_varnames(scenarios{i},T,E,LOSS,CHG,length(data.N10),nsteps);
 
 %% Constants
 
@@ -49,7 +53,7 @@ mini  = initialmodel_flatprior(prior_range,nWalks);
 
 %% Forward model
 
-forward_model = @(m) Nforward_discretized(m(2:end-1),[m(1); 0],m(end),sp,consts,Nmu,'step');
+forward_model = @(m) Nforward_wrapper(m,sp,consts,Nmu,scenarios{i},tdata.steps);
 
 %% log likelihood function
 % First we define a helper function equivalent to calling log(normpdf(x,mu,sigma))
@@ -62,8 +66,17 @@ logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == siz
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},2e6,'ThinChain',10,'burnin',.2,'StepSize',5);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e68,'ThinChain',10,'burnin',.2,'StepSize',5);
 toc
+models = single(models); logLike = single(logLike); % save some memory
+
+%% Best-fit model
+
+posterior_like = squeeze(logLike(2,:,:));
+[best_walker_like, best_walker_index] = max(posterior_like,[],2);
+[best_model_like, best_index] = max(best_walker_like);
+best_model = models(:,best_index,best_walker_index(best_index));
+best_pred = forward_model(best_model);
 
 %% Autocorrelation
 
@@ -76,16 +89,9 @@ ylabel('autocorrelation');
 text(lags(end),0,sprintf('Effective Sample Size (ESS): %.0f_ ',ceil(mean(ESS))),'verticalalignment','bottom','horizontalalignment','right')
 title('Markov Chain Auto Correlation')
 
-%% remove "bad" chains
+%% Autocorrelation
 
-meanC = mean(C,1); % chains that got stuck with high autocorrelation
-
-thres = 0.2; % mean autocorrelation of chains that is allowed. The bad chains have values around 0.4-0.5
-
-remove_inds = meanC > thres;
-
-models(:,remove_inds,:) = [];   % remove bad chains
-logLike(:,remove_inds,:)= [];
+h1 = autocorrelationplot(models);
 
 %% Chain plots
 
@@ -93,32 +99,24 @@ h2 = chainplot(models,var_names,prior_range);
 
 %% Corner plot of parameters
 
-h3 = figure;
-ecornerplot(models,'ks',true,'color',[.3 .3 .3])
+h3 = ecornerplot(models,'ks',true,'color',[.3 .3 .3],'name',var_names,'bestmodel',best_model);
 
 %% Barplot of parameters
 
-h4 = barplot_parameters(models,var_names);
-
-%% Best-fit model
-posterior_like = squeeze(logLike(2,:,:));
-
-[best_walker_like, best_walker_index] = max(posterior_like,[],2);
-[best_model_like, best_index] = max(best_walker_like);
-
-best_model = models(:,best_index,best_walker_index(best_index));
-
+h4 = barplot_parameters(models,var_names,'bestmodel',best_model);
 
 %% Comparison best model and data
 
-best_pred = forward_model(best_model);
-difference = Nobs - best_pred
-
 h5 = conc_modelledVSobserved(best_pred,data.N10,data.N10sigma,data.N14,data.N14sigma);
 
-%%
-% exportgraphics(h2,'WC_MCMC_chains.png','Resolution',300)
-% exportgraphics(h4,'WC_MCMC_cornerplot.png','Resolution',300)
-% exportgraphics(h4,'WC_MCMC_barplot.png','Resolution',300)
+%% Export
 
-% save("WC_results")
+exportgraphics(h1,['./output/WC_' scenarios{i} '_autocorrelation.png'],'Resolution',300)
+exportgraphics(h2,['./output/WC_' scenarios{i} '_chains.png'],'Resolution',300)
+exportgraphics(h3,['./output/WC_' scenarios{i} '_cornerplot.png'],'Resolution',300)
+exportgraphics(h4,['./output/WC_' scenarios{i} '_barplot.png'],'Resolution',300)
+exportgraphics(h5,['./output/WC_' scenarios{i} '_datafit.png'],'Resolution',300)
+save(['./output/WC_' scenarios{i} '.mat'])
+i
+clear 'Nmu' 'consts' 'sp' 'mini' 'models' 'logLike' 'var_names' 'prior_range' 'h1' 'h2' 'h3' 'h4' 'h5' 'C' 'lags' 'ESS' 'best_model' 'best_pred' 'posterior_like'
+end

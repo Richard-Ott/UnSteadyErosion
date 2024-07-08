@@ -32,15 +32,15 @@ switch scenario
             var_names = [var_names, arrayfun(@(x) sprintf('Loss%d_sample%d', i, x), 1:n, 'UniformOutput', false)];
         end
     case 'samespike'
-        prior_range = [time_prior; repmat(E, n, 1); repmat(CHG,steps,1)];
+        prior_range = [time_prior; repmat(E, n, 1); repmat(LOSS,steps,1)];
         var_names = [var_names, arrayfun(@(x) sprintf('Esample%d', x), 1:n, 'UniformOutput', false),...
         arrayfun(@(x) sprintf('Loss%d', x), 1:steps, 'UniformOutput', false)];
     case 'samebackground_spike'
-        prior_range = [time_prior; E; repmat(CHG,n,1)];  
+        prior_range = [time_prior; E; repmat(LOSS,n,1)];  
         var_names = [var_names, 'E', arrayfun(@(x) sprintf('Loss%d', x), 1:n, 'UniformOutput', false)];
     case 'samebackground_samespike'
-        prior_range = [time_prior; E; LOSS];  
-        var_names = [var_names, 'E','Loss'];
+        prior_range = [time_prior; E; repmat(LOSS,steps,1)];  
+        var_names = [var_names, 'E', arrayfun(@(x) sprintf('Loss%d', x), 1:steps, 'UniformOutput', false)];
 end
 
 end

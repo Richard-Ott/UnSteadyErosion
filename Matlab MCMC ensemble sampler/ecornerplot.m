@@ -1,4 +1,4 @@
-function H=ecornerplot(m,varargin)
+function newfig=ecornerplot(m,varargin)
 %% Corner plot with allowance for effective sample size
 %
 % ecornerplot(m,[parameter,value])
@@ -54,6 +54,7 @@ p.addOptional('scatter',nan,@islogical);
 p.addOptional('fullmatrix',false,@islogical);
 p.addOptional('color',[1 1 1]*.5,@(x)all(size(x)==[1 3]))
 p.addOptional('ess',[]);
+p.addOptional('bestmodel',[]);
 p.addOptional('truevals',[]);
 % p.addOptional('truth',[fa],@isnumeric);
 p.parse(varargin{:});
@@ -110,7 +111,9 @@ else
     p.grid='off';
 end
 
-clf
+% clf
+
+newfig = figure('Units', 'normalized', 'Position', [0.05, 0.05, 0.8, 0.8]);
 H=nan(M);
 for r=1:M
     for c=1:max(r,M*p.fullmatrix)
@@ -134,6 +137,13 @@ for r=1:M
             if~isempty(p.truevals)
                 xline(p.truevals(r),'k--')
             end
+            if~isempty(p.bestmodel)
+                differences = abs(X - p.bestmodel(r));
+                [~, index] = min(differences);
+                hold on
+                
+                plot(X(index),F(index),'Color', 'k' , 'Marker','diamond')
+            end
         else
             if p.scatter
                 plot(m(:,c),m(:,r),'.','color',p.color)
@@ -154,6 +164,16 @@ for r=1:M
                     levels = interp1q(cumsum(NS),NS,(0.1:.2:1)')'; %HDI LEVELS
                     contourf(X,Y,N,levels,'edgecolor',p.color);
                     caxis([0,max(NS)])
+
+                    % if~isempty(p.bestmodel)
+                    %     differences = abs(X - p.bestmodel(r));
+                    %     [~, index1] = min(differences);
+                    %     differences = abs(Y - p.bestmodel(c));
+                    %     [~, index2] = min(differences);
+                    %     hold on
+                    % 
+                    %     plot(X(index1),Y(index2),'Color', 'k' , 'Marker','diamond')
+                    % end
                 catch
                 end
                 %                 pcolor(X,Y,N); %

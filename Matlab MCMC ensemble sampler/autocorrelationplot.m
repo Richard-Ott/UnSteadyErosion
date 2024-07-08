@@ -1,4 +1,4 @@
-function H = autocorrelationplot(models)
+function [H,C] = autocorrelationplot(models)
 % plots autocorrelation of MCMC chains
 
 H=figure;
