@@ -6,7 +6,7 @@ schemes to analyze data for these scenarios. The code is currently adapted to wo
 for 10Be, 14C, and 26Al nuclide measurements (not all samples need all nuclides).
 All models can be run for a single sample as well as a suite of data. However, 
 the inversion cannot constrain meaningful results for a single sample, because there
-are less data than parameters.
+are less data than parameters (run isoline codes scripts for single sample).
 
 Currently 8 erosion scenarios are supported. There are two main scenario types:
 step-changes in erosion and erosion spikes. In step change models, the erosion rate
@@ -48,6 +48,12 @@ data to illustrate what parameter/sample combinations can theoretically be re-
 solved.
 
 * 'WC_MCMC_inversion' shows the use with Crete 14C-10Be data
+
+* 'Isolines_10Be_14C_stepchange': Calculates the analytical solution for erosion rate
+acceleration and a range of plausible times for the step change. Remember 1 samples -->
+2 equations and three unknowns (e1,e2,t), and hence all solutions lie on a line.
+
+* 'Isolines_10Be_14C_spike': same semi-analytical solutions for spike model 
 
 ## Inversion sampler
 This toolbox uses the 'gwmcmc' Bayesian Ensemble Sampler (Goodman and Weare, 2010).

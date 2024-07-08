@@ -9,7 +9,8 @@ addpath('.\CosmoTools\')
 data = readtable('data\WCdata_RFO.xlsx'); % AMS data
 nWalks = 30;                              % how many chains per sample?
 
-scenario = 'samebackground_step'; 
+scenarios = {'samestep', 'samebackground_step', 'samebackground_samestep',...
+     'samespike', 'samebackground_spike', 'samebackground_samespike'}; 
 
 nsteps = 1;
 
@@ -31,6 +32,7 @@ dNobs= [data.N10sigma; data.N14sigma; data.N26sigma];
 
 Nlogical = [~isnan(data.N10) ~isnan(data.N14) ~isnan(data.N26)];
 
+for i = 1:length(scenarios)
 %% Priors -----------------------------------------------------------------
 T   = [1,10e3];      % time of step change in yrs [min,max]
 E1  = [10,3e2];      % old erosion rate in mm/ka  [min,max]
@@ -54,20 +56,20 @@ mini  = initialmodel_flatprior(prior_range,nWalks);
 
 %% Forward model
 
-forward_model = @(m) Nforward_wrapper(m,sp,consts,Nmu,scenario,nsteps,Nlogical);
+forward_model = @(m) Nforward_wrapper(m,sp,consts,Nmu,scenarios{i},tdata.steps,Nlogical);
 
 %% log likelihood function
 % First we define a helper function equivalent to calling log(normpdf(x,mu,sigma))
 % but has higher precision because it avoids truncation errors associated with calling
 % log(exp(xxx)).
 lognormpdf = @(x,mu,sigma)-0.5*((x-mu)./sigma).^2  -log(sqrt(2*pi).*sigma);
-logLike    = @(m) sum(lognormpdf(Nobs(Nlogical), forward_model(m), dNobs(Nlogical)));
+logLike    = @(m) sum(lognormpdf(Nobs, forward_model(m), dNobs));
 
 logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == size(prior_range,1);
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},2e6,'ThinChain',5,'burnin',.2,'StepSize',2.5);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e6,'ThinChain',10,'burnin',.2,'StepSize',5);
 toc
 models = single(models); logLike = single(logLike); % save some memory
 
@@ -110,3 +112,14 @@ h4 = barplot_parameters(models,var_names,'bestmodel',best_model);
 
 h5 = conc_modelledVSobserved(best_pred,data.N10,data.N10sigma,data.N14,data.N14sigma);
 
+%% Export
+
+exportgraphics(h1,['./output/WC_' scenarios{i} '_autocorrelation.png'],'Resolution',300)
+exportgraphics(h2,['./output/WC_' scenarios{i} '_chains.png'],'Resolution',300)
+exportgraphics(h3,['./output/WC_' scenarios{i} '_cornerplot.png'],'Resolution',300)
+exportgraphics(h4,['./output/WC_' scenarios{i} '_barplot.png'],'Resolution',300)
+exportgraphics(h5,['./output/WC_' scenarios{i} '_datafit.png'],'Resolution',300)
+save(['./output/WC_' scenarios{i} '.mat'])
+i
+clear 'Nmu' 'consts' 'sp' 'mini' 'models' 'logLike' 'var_names' 'prior_range' 'h1' 'h2' 'h3' 'h4' 'h5' 'C' 'lags' 'ESS' 'best_model' 'best_pred' 'posterior_like'
+end
