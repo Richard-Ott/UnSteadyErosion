@@ -8,10 +8,14 @@ addParameter(p, 'bestmodel',[]);
 addParameter(p, 'truevals',[]);
 parse(p,varargin{:});
 
-m=m(:,:);   % reshape and collapse all the individual chains together
+
+models= [];
+for i = 1:length(m)
+    models = [ models, m{i}.u(:,m{i}.status == 1)];
+end
 
 H=figure();
-boxchart(m','Orientation','horizontal')
+boxchart(models','Orientation','horizontal')
 yticklabels(varnames)
 
 if ~isempty(p.Results.truevals)

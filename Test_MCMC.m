@@ -5,14 +5,14 @@ close all
 addpath('.\online-calculators-v3\')
 addpath('.\Matlab MCMC ensemble sampler\')
 
-nWalks = 4;       % how many MCMC chains?
+nWalks = 2;       % how many MCMC chains?
 export = 0;        % do you want to export the data and plots?
 filetag = 'test';  % filetag for export
 
 % choose one of these erosion scenarios: 
 % 'step',  'samestep',  'samebackground_step', 'samebackground_samestep'
 % 'spike', 'samespike', 'samebackground_spike','samebackground_samespike'
-scenario = 'samebackground_spike'; 
+scenario = 'spike'; 
 
 %% Test data. Use this to see if inversion can recover input
 n = 7;   % number of samples
@@ -69,4 +69,13 @@ h1 = chainplot(walkers,var_names,prior_range,mtest);
 
 %% Corner plot
 
-h2 = ecornerplot(walkers,'ks',true,'color',[.3 .3 .3],'name',var_names,'bestmodel',best_model,"truevals",mtest);
+h2 = ecornerplot(walkers,'ks',true,'color',[.3 .3 .3],'name',var_names,'bestmodel',best_model,"truevals",mtest,'support',prior_range');
+
+%% Barplot of parameters
+
+h3 = barplot_parameters(walkers,var_names,'bestmodel',best_model,'truevals',mtest);
+
+%% Comparison best model and data
+
+h4 = conc_modelledVSobserved(walkers,testObs(1:n),testObs(1:n).*0.08,testObs(n+1:end),testObs(n+1:end)*0.08);
+

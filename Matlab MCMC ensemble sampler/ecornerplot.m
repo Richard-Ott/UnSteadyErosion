@@ -60,28 +60,40 @@ p.addOptional('truevals',[]);
 p.parse(varargin{:});
 p=p.Results;
 
+M=size(m{1}.up,1);   % number of parameters
+
+models= [];
+for i = 1:length(m)
+    models = [ models, m{i}.u(:,m{i}.status == 1)];
+end
+Np=length(models);
 
 
 if isempty(p.ess)
-    [~,~,p.ess]=eacorr(m);
+    % build model matrix from walker strcuture
+    models_gwmcmc = zeros(M,length(m),Np);
+    currentColumn = 1;
+    for i = 1:length(m)
+        walker_models = m{i}.u(:,m{i}.status == 1);
+        models_gwmcmc(:,i,currentColumn:(currentColumn + size(walker_models,2) - 1)) = m{i}.u(:,m{i}.status == 1);
+    end
+
+    [~,~,p.ess]=eacorr(models_gwmcmc);
     p.ess=mean(p.ess);
 end
 
 
-M=length(m);          % number of walkers
-Np=size(m{1}.up,1);   % number of parameters
 
-models= [];
-for i = 1:M
-    models = [ models, m{i}.u];
-end
+
+
+
 
 % p.range=prctile(m,[50+[-1 1]*p.range/2 0 100]); %first 2 
 % rng=p.range(4,:)-p.range(3,:);
 % if isempty(p.support),p.support=nan(2,M);end
 % ix=isnan(p.support(1,:)); p.support(1,ix)=p.range(3,ix)-rng(ix)/4;
 % ix=isnan(p.support(2,:)); p.support(2,ix)=p.range(4,ix)+rng(ix)/4;
-
+% 
 
 for ii=length(p.names)+1:M
     p.names{ii}=sprintf('m_{%.0f}',ii);
@@ -102,13 +114,13 @@ for r=1:M
         H(r,c)=subaxis(M,M,c,r,'s',0.01,'mb',0.12,'mt',0.05,'ml',0.12,'mr',0.0);
         if c==r
             if p.ks
-                [F,X,bw]=ksdensity(m(:,r),'support',p.support(:,r)); %TODO: use ESS 
+                [F,X,bw]=ksdensity(models(r,:)); %TODO: use ESS 
                 if p.ess<Np
-                    [F,X,bw]=ksdensity(m(:,r),'width',bw*(Np/p.ess)^.2,'support',p.support(:,r)); %(the power 1/5 comes from examining the bandwidth calculation in ksdensity)
+                    [F,X,bw]=ksdensity(models(r,:),'width',bw*(Np/p.ess)^.2); %(the power 1/5 comes from examining the bandwidth calculation in ksdensity)
                 end
                 X=X([1,1:end,end]);F=[0,F,0];
             else
-                [F,X]=histcounts(m(:,r),'Normalization','pdf');
+                [F,X]=histcounts(models(r,:),'Normalization','pdf');
                 X=X(ceil(0.5:0.5:end));
                 F=[0,F(ceil(0.5:0.5:end)),0];
             end
@@ -133,7 +145,7 @@ for r=1:M
             %                 caxis([0 max(N(:))]);
             %                 axis xy
             try
-                [~,N,X,Y]=kde2d(m(:,[c r]),2^9,p.support(1,[c r]),p.support(2,[c r]),p.ess);
+                [~,N,X,Y]=kde2d(models([c r],:)');
                 %                 ns=sort(N(:));
                 %                 cint=interp1q(cumsum(ns)/sum(ns),ns,[0.05 0.17 0.50 0.83 0.95]');
                 hold on
@@ -159,11 +171,11 @@ for r=1:M
             %                 pcolor(X,Y,N); %
             %                 shading interp
             set(gca,'XGrid',p.grid,'YGrid',p.grid)
-            if diff(p.range(1:2,r))>0, set(gca,'Ylim',p.range(1:2,r)); end
+            % if diff(p.range(1:2,r))>0, set(gca,'Ylim',p.range(1:2,r)); end
         end
         if r==M, xlabel(['^{ }' p.names{c} '_{ }']);end
         if (c==1)&(r>1-p.fullmatrix), ylabel(['^{ }' p.names{r} '_{ }']);end
-        if diff(p.range(1:2,c))>0, set(gca,'Xlim',p.range(1:2,c)'); end
+        % if diff(p.range(1:2,c))>0, set(gca,'Xlim',p.range(1:2,c)'); end
     end
     
 end

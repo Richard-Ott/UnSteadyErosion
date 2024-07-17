@@ -2,7 +2,7 @@ function walker = Egholm_MCMC(nWalks,Nobs,dNobs,mini,prior_range,forward_model)
 
 %save some general MCMC paramers
 burnin = 5e4;              % burn in iterations
-Nmod = 5e4;                % number of accpected samples
+Nmod = 1e5;                % number of accpected samples
 Nmax = 2e6;                % maximum number of models
 Nmp  = size(mini,1);       % number of model parameters
 Temp = 1;
@@ -167,5 +167,6 @@ for nw = 1:nWalks
     disp([num2str(acount), ' accpected samples'])  % tell user how many samples were accepted
     disp(['acceptance ratio = ' ,num2str(acount/mi)])  % tell user how many samples were accepted
 end
+close(wb)
 
 end
