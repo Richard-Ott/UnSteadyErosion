@@ -9,7 +9,7 @@ addpath('.\CosmoTools\')
 data = readtable('data\WCdata_RFO.xlsx'); % AMS data
 nWalks = 30;                              % how many chains per sample?
 
-scenario = 'samebackground_step'; 
+scenario = 'samestep'; 
 
 nsteps = 1;
 

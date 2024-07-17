@@ -61,8 +61,6 @@ p.parse(varargin{:});
 p=p.Results;
 
 
-if (size(m,1)<size(m,2))&&(ismatrix(m)), m=m'; end; %Consider this behaviour further....
-
 
 if isempty(p.ess)
     [~,~,p.ess]=eacorr(m);
@@ -70,41 +68,25 @@ if isempty(p.ess)
 end
 
 
+M=length(m);          % number of walkers
+Np=size(m{1}.up,1);   % number of parameters
 
-if ndims(m)==3
-    m=m(:,:)'; 
+models= [];
+for i = 1:M
+    models = [ models, m{i}.u];
 end
 
-
-
-
-M=size(m,2);
-Np=size(m,1);
-if p.ess>Np
-    error('Effective Sample Size (ess) must be smaller than number of samples')
-end
-if M>20
-    % error('Too many dimensions. You probably don''t want to make that many subplots. ')
-end
-if isnan(p.scatter)
-    p.scatter=Np<2000;
-end
-
-p.range=prctile(m,[50+[-1 1]*p.range/2 0 100]); %first 2 
-rng=p.range(4,:)-p.range(3,:);
-if isempty(p.support),p.support=nan(2,M);end
-ix=isnan(p.support(1,:)); p.support(1,ix)=p.range(3,ix)-rng(ix)/4;
-ix=isnan(p.support(2,:)); p.support(2,ix)=p.range(4,ix)+rng(ix)/4;
-
-
+% p.range=prctile(m,[50+[-1 1]*p.range/2 0 100]); %first 2 
+% rng=p.range(4,:)-p.range(3,:);
+% if isempty(p.support),p.support=nan(2,M);end
+% ix=isnan(p.support(1,:)); p.support(1,ix)=p.range(3,ix)-rng(ix)/4;
+% ix=isnan(p.support(2,:)); p.support(2,ix)=p.range(4,ix)+rng(ix)/4;
 
 
 for ii=length(p.names)+1:M
     p.names{ii}=sprintf('m_{%.0f}',ii);
 end
-% for ii=size(p.truth,2)+1:M
-%     p.truth(ii,:)=nan;
-% end
+
 if p.grid
     p.grid='on';
 else
@@ -115,7 +97,7 @@ end
 
 newfig = figure('Units', 'normalized', 'Position', [0.05, 0.05, 0.8, 0.8]);
 H=nan(M);
-for r=1:M
+for r=1:M    
     for c=1:max(r,M*p.fullmatrix)
         H(r,c)=subaxis(M,M,c,r,'s',0.01,'mb',0.12,'mt',0.05,'ml',0.12,'mr',0.0);
         if c==r
@@ -145,40 +127,37 @@ for r=1:M
                 plot(X(index),F(index),'Color', 'k' , 'Marker','diamond')
             end
         else
-            if p.scatter
-                plot(m(:,c),m(:,r),'.','color',p.color)
-            else
-                %                 [N,C]=hist3(m(:,[c r]),[0 0]+ceil(sqrt(Np)/5));
-                %                 imagesc(C{1},C{2},N)
-                %                 caxis([0 max(N(:))]);
-                %                 axis xy
-                try
-                    [~,N,X,Y]=kde2d(m(:,[c r]),2^9,p.support(1,[c r]),p.support(2,[c r]),p.ess);
-                    %                 ns=sort(N(:));
-                    %                 cint=interp1q(cumsum(ns)/sum(ns),ns,[0.05 0.17 0.50 0.83 0.95]');
-                    hold on
-                    %N=N/max(N(:));
-                    %contourf(X,Y,N,(0.1:.2:1)','edgecolor',p.color); %TODO: try to make it HDI like???
-                    N=N/sum(N(:));
-                    NS=sort(N(:));
-                    levels = interp1q(cumsum(NS),NS,(0.1:.2:1)')'; %HDI LEVELS
-                    contourf(X,Y,N,levels,'edgecolor',p.color);
-                    caxis([0,max(NS)])
+ 
+            %                 [N,C]=hist3(m(:,[c r]),[0 0]+ceil(sqrt(Np)/5));
+            %                 imagesc(C{1},C{2},N)
+            %                 caxis([0 max(N(:))]);
+            %                 axis xy
+            try
+                [~,N,X,Y]=kde2d(m(:,[c r]),2^9,p.support(1,[c r]),p.support(2,[c r]),p.ess);
+                %                 ns=sort(N(:));
+                %                 cint=interp1q(cumsum(ns)/sum(ns),ns,[0.05 0.17 0.50 0.83 0.95]');
+                hold on
+                %N=N/max(N(:));
+                %contourf(X,Y,N,(0.1:.2:1)','edgecolor',p.color); %TODO: try to make it HDI like???
+                N=N/sum(N(:));
+                NS=sort(N(:));
+                levels = interp1q(cumsum(NS),NS,(0.1:.2:1)')'; %HDI LEVELS
+                contourf(X,Y,N,levels,'edgecolor',p.color);
+                caxis([0,max(NS)])
 
-                    % if~isempty(p.bestmodel)
-                    %     differences = abs(X - p.bestmodel(r));
-                    %     [~, index1] = min(differences);
-                    %     differences = abs(Y - p.bestmodel(c));
-                    %     [~, index2] = min(differences);
-                    %     hold on
-                    % 
-                    %     plot(X(index1),Y(index2),'Color', 'k' , 'Marker','diamond')
-                    % end
-                catch
-                end
-                %                 pcolor(X,Y,N); %
-                %                 shading interp
+                % if~isempty(p.bestmodel)
+                %     differences = abs(X - p.bestmodel(r));
+                %     [~, index1] = min(differences);
+                %     differences = abs(Y - p.bestmodel(c));
+                %     [~, index2] = min(differences);
+                %     hold on
+                % 
+                %     plot(X(index1),Y(index2),'Color', 'k' , 'Marker','diamond')
+                % end
+            catch
             end
+            %                 pcolor(X,Y,N); %
+            %                 shading interp
             set(gca,'XGrid',p.grid,'YGrid',p.grid)
             if diff(p.range(1:2,r))>0, set(gca,'Ylim',p.range(1:2,r)); end
         end

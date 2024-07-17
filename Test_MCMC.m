@@ -5,7 +5,7 @@ close all
 addpath('.\online-calculators-v3\')
 addpath('.\Matlab MCMC ensemble sampler\')
 
-nWalks = 25;       % how many MCMC chains?
+nWalks = 4;       % how many MCMC chains?
 export = 0;        % do you want to export the data and plots?
 filetag = 'test';  % filetag for export
 
@@ -48,55 +48,25 @@ forward_model = @(m) Nforward_wrapper(m,sp,consts,Nmu,scenario,tdata.steps,Nlogi
 mtest = [tdata.t'; tdata.e'; tdata.changeVariable'];
 testObs = forward_model(mtest);
 
-%% log likelihood functions
-% First we define a helper function equivalent to calling log(normpdf(x,mu,sigma))
-% but has higher precision because it avoids truncation errors associated with calling
-% log(exp(xxx)).
-lognormpdf = @(x,mu,sigma)-0.5*((x-mu)./sigma).^2  -log(sqrt(2*pi).*sigma);
-logLike    = @(m) sum(lognormpdf(testObs, forward_model(m), testObs*0.08));
-
-logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == size(prior_range,1);
 
 %% Posterior sampling
-tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e6,'ThinChain',5,'burnin',.2);
-toc
-models = single(models); logLike = single(logLike); % save some memory
 
-%% Best-fit model
+walkers = Egholm_MCMC(nWalks,testObs,testObs*0.08,mini,prior_range,forward_model);
 
-posterior_like = squeeze(logLike(2,:,:));
-[best_walker_like, best_walker_index] = max(posterior_like,[],2);
-[best_model_like, best_index] = max(best_walker_like);
-best_model = models(:,best_index,best_walker_index(best_index));
-best_pred = forward_model(best_model);
-
-%% Autocorrelation
-
-h1 = autocorrelationplot(models);
+%% best model
+best_obs_err = inf;
+for i = 1:nWalks
+    [best_obs_err_walker, best_ind] = min(walkers{i}.restot);
+    best_model_walker = walkers{i}.u(:,best_ind);
+    if best_obs_err_walker < best_obs_err
+        best_model = best_model_walker;
+    end
+end
 
 %% Chain plots
 
-h2 = chainplot(models,var_names,prior_range,mtest);
+h1 = chainplot(walkers,var_names,prior_range,mtest);
 
-%% Corner plot of parameters
+%% Corner plot
 
-h3 = ecornerplot(models,'ks',true,'color',[.3 .3 .3],'name',var_names,'bestmodel',best_model,"truevals",mtest);
-
-%% Barplot of parameters
-
-h4 = barplot_parameters(models,var_names,'bestmodel',best_model,'truevals',mtest);
-
-%% Comparison best model and data
-
-h5 = conc_modelledVSobserved(best_pred,testObs(1:n),testObs(1:n).*0.08,testObs(n+1:end),testObs(n+1:end)*0.08);
-
-%% Export
-
-if export
-    exportgraphics(h1,['./output/' filetag '_' scenario '_autocorrelation.png'],'Resolution',300)
-    exportgraphics(h2,['./output/' filetag '_' scenario '_chains.png'],'Resolution',300)
-    exportgraphics(h3,['./output/' filetag '_' scenario '_cornerplot.png'],'Resolution',300)
-    exportgraphics(h4,['./output/' filetag '_' scenario '_barplot.png'],'Resolution',300)
-    exportgraphics(h5,['./output/' filetag '_' scenario '_datafit.png'],'Resolution',300)
-end
+h2 = ecornerplot(walkers,'ks',true,'color',[.3 .3 .3],'name',var_names,'bestmodel',best_model,"truevals",mtest);
