@@ -1,13 +1,22 @@
-function walker = Egholm_MCMC(nWalks,Nobs,dNobs,mini,prior_range,forward_model)
+function walker = Egholm_MCMC(nWalks,Nobs,dNobs,mini,prior_range,forward_model,Nlogical)
+Nobs=Nobs(Nlogical);
+dNobs=dNobs(Nlogical);
 
 %save some general MCMC paramers
-burnin = 5e4;              % burn in iterations
-Nmod = 1e5;                % number of accpected samples
+burnin = 5e4;              % burn in iterations (accepted)
+Nmod = 2e5;                % number of accpected samples
 Nmax = 2e6;                % maximum number of models
 Nmp  = size(mini,1);       % number of model parameters
 Temp = 1;
 Cobs = diag(dNobs.^2);
 Cobsinv = inv(Cobs);
+
+% % real samples need a higher variance tolerance to get going, so I start
+% % with 5 times the original error before switching after the MCMC got a
+% % foothold. This is only needed for Crete samples for some reason
+% CobsSTART = diag((dNobs*3).^2);
+% CobsinvSTART = inv(CobsSTART);
+
 
 du0 = prior_range(:,2) - prior_range(:,1);
 umin = prior_range(:,1);
@@ -27,7 +36,7 @@ for nw = 1:nWalks
     res_current = 1e20;  % residual inital guess
     restot = 0;          % residual total (observational error)
     acount = 0;          % accepted samples after burn-in
-    bcount = 0;          % accepted samples before burn-in
+    bcount = 0;          % accepted samples during burn-in
     rcount = 0;          % rejected samples
     accrat = 0;          % acceptance ratio
     status = zeros(Nmax,1);
@@ -81,7 +90,11 @@ for nw = 1:nWalks
         if (bcount < burnin) Temp = 1.0 + 20.0*(burnin-bcount)/burnin;
         else Temp = 1.0;
         end
-
+            
+        % weird RO edit ------------------------------------------
+        % if k < 0.005  % make sure step sizes dont get too small, this seems to happen
+        %     k = 0.005;
+        % end
         %********* propose new parameters ************
         
         %random step
@@ -112,7 +125,11 @@ for nw = 1:nWalks
         gmp = forward_model(up);
                
         %Acceptance critieria
+        % if (acount + bcount) > 1000
         restot = (Nobs(:)-gmp(:))'*Cobsinv*(Nobs(:)-gmp(:))/Temp;
+        % else
+            % restot = (Nobs(:)-gmp(:))'*CobsinvSTART*(Nobs(:)-gmp(:))/Temp;
+        % end
         rfrac = exp(-0.5*restot)/exp(-0.5*res_current);
         alpha = rand(1);
     

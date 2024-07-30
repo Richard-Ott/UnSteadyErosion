@@ -51,7 +51,7 @@ testObs = forward_model(mtest);
 
 %% Posterior sampling
 
-walkers = Egholm_MCMC(nWalks,testObs,testObs*0.08,mini,prior_range,forward_model);
+walkers = Egholm_MCMC(nWalks,testObs,testObs*0.08,mini,prior_range,forward_model,Nlogical);
 
 %% best model
 best_obs_err = inf;

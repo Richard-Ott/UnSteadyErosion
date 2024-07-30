@@ -66,36 +66,41 @@ logLike    = @(m) sum(lognormpdf(Nobs(Nlogical), forward_model(m), dNobs(Nlogica
 logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == size(prior_range,1);
 
 %% Posterior sampling
-tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e6,'ThinChain',5,'burnin',.2,'StepSize',2.5);
-toc
-models = single(models); logLike = single(logLike); % save some memory
+%% Posterior sampling
 
-%% Best-fit model
+walkers = Egholm_MCMC(nWalks,Nobs,dNobs,mini,prior_range,forward_model,Nlogical);
 
-posterior_like = squeeze(logLike(2,:,:));
-[best_walker_like, best_walker_index] = max(posterior_like,[],2);
-[best_model_like, best_index] = max(best_walker_like);
-best_model = models(:,best_index,best_walker_index(best_index));
-best_pred = forward_model(best_model);
-
-%% Autocorrelation
-
-h1 = autocorrelationplot(models);
+%% best model
+best_obs_err = inf;
+for j = 1:nWalks
+    [best_obs_err_walker, best_ind] = min(walkers{j}.restot);
+    best_model_walker = walkers{j}.u(:,best_ind);
+    if best_obs_err_walker < best_obs_err
+        best_model = best_model_walker;
+    end
+end
 
 %% Chain plots
 
-h2 = chainplot(models,var_names,prior_range);
+h1 = chainplot(walkers,var_names,prior_range);
 
-%% Corner plot of parameters
+%% Corner plot
 
-h3 = ecornerplot(models,'ks',true,'color',[.3 .3 .3],'name',var_names,'bestmodel',best_model);
+h2 = ecornerplot(walkers,'ks',true,'color',[.3 .3 .3],'name',var_names,'bestmodel',best_model,'support',prior_range');
 
 %% Barplot of parameters
 
-h4 = barplot_parameters(models,var_names,'bestmodel',best_model);
+h3 = barplot_parameters(walkers,var_names,'bestmodel',best_model);
 
 %% Comparison best model and data
 
-h5 = conc_modelledVSobserved(best_pred,data.N10,data.N10sigma,data.N14,data.N14sigma);
+h4 = conc_modelledVSobserved(walkers,data.N10,data.N10sigma,data.N14,data.N14sigma);
 
+%% Export
+
+if export
+    exportgraphics(h1,['./output/WC_' scenarios{i} '_chains.png'],'Resolution',300)
+    exportgraphics(h2,['./output/WC_' scenarios{i} '_cornerplot.png'],'Resolution',300)
+    exportgraphics(h3,['./output/WC_' scenarios{i} '_barplot.png'],'Resolution',300)
+    exportgraphics(h4,['./output/WC_' scenarios{i} '_datafit.png'],'Resolution',300)
+end

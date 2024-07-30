@@ -17,15 +17,21 @@ end
 H=figure();
 boxchart(models','Orientation','horizontal')
 yticklabels(varnames)
+legendlabels{1} = 'posterior';
 
 if ~isempty(p.Results.truevals)
     hold on 
     plot(p.Results.truevals, 1:length(p.Results.truevals), 'p', 'MarkerSize', 10, 'MarkerEdgeColor', 'r', 'MarkerFaceColor', 'r')
+    legendlabels = [legendlabels ; {'true value'}];
 end
 
 if ~isempty(p.Results.bestmodel)
     hold on 
     plot(p.Results.bestmodel, 1:length(p.Results.bestmodel), 'd', 'MarkerSize', 8, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'none')
+    legendlabels = [legendlabels ; {'best fit'}];
 end
+
+
+legend(legendlabels)
 
 end
