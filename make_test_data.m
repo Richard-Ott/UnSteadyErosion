@@ -14,11 +14,11 @@ switch scenario
                       1000,2000,4000,200,50,100,500];% new erosion rates of catchments
         testdata.changeVariable = [];                % this is variable for convinience, so that I dont need a swith between loss/change or no change factor later on
     case 'samestep'
-        testdata.t = [1000];                        % step change timing
+        testdata.t = [1500];                        % step change timing
         testdata.e = [20,50,100,40,60,80,90];       % old erosion rates of different catchments
         testdata.chg = [20];                        % change factor of erosion rate at time t
     case 'samebackground_step'
-        testdata.t = [1000];                         % step change timing
+        testdata.t = [1500];                         % step change timing
         testdata.e = 50;                             % old erosion rates of different catchments
         testdata.chg = [10,20,5,40,2,25,30];       % change factor of erosion rate at time t
     case 'samebackground_samestep'

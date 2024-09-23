@@ -9,7 +9,7 @@ addpath('.\CosmoTools\')
 data = readtable('data\WCdata_RFO.xlsx'); % AMS data
 nWalks = 30;                              % how many chains per sample?
 
-scenario = 'samebackground_step'; 
+scenario = 'spike'; 
 
 nsteps = 1;
 
@@ -32,8 +32,8 @@ dNobs= [data.N10sigma; data.N14sigma; data.N26sigma];
 Nlogical = [~isnan(data.N10) ~isnan(data.N14) ~isnan(data.N26)];
 
 %% Priors -----------------------------------------------------------------
-T   = [1,10e3];      % time of step change in yrs [min,max]
-E1  = [10,3e2];      % old erosion rate in mm/ka  [min,max]
+T   = [2300,2700];      % time of step change in yrs [min,max]
+E1  = [10,2e2];      % old erosion rate in mm/ka  [min,max]
 CHG = [0.1 100];     % increase [ ] 
 LOSS = [0,200];     % loss of soil in cm [min,max], can be commented if no spike model
 
@@ -67,7 +67,7 @@ logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == siz
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e6,'ThinChain',5,'burnin',.2,'StepSize',2.5);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e7,'ThinChain',5,'burnin',.2,'StepSize',2.5);
 toc
 models = single(models); logLike = single(logLike); % save some memory
 
