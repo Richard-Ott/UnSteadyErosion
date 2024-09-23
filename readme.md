@@ -39,7 +39,11 @@ erosion is the same and all soil loss heights.
 
 ## Production rates
 Production rates are calculated based on the online calculators formerly known as
-CRONUS-Earth online calculators v3. 
+CRONUS-Earth online calculators v3. .
+
+Balco, G, Stone, JO, Lifton, NA, Dunai, TJ. 2008. A complete and easily accessible means 
+of calculating surface exposure ages or erosion rates from 10Be and 26Al measurements. 
+Quaternary Geochronology 3(3):174–195. https://doi.org/10.1016/j.quageo.2007.12.001 
 
 ## Example scripts
 * 'Test_MCMC' Script that can generate test data for all erosion scenarios
