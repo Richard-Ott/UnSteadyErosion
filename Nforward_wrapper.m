@@ -8,13 +8,9 @@ function N = Nforward_wrapper(model,sp,consts,Nmu,scenario,nsteps,Nlogical)
 %       - sp: sample specific parameters (Pspal & pressure)
 %       - consts: the consts_v3.mat file from Cronus v3
 %       - precalculated muon production rates from Cronus v3 (Nmu.mat)
-%       - type: type of erosion scenario. Either: 
-%               - 'step': step changes in erosion rates with individual
-%               rates per sample
-%               - 'samestep': step changes in erosion with common change
-%               factor
-%               - 'spike': spikes of soil loss
-%       - nsteps:  the number of step changes of spike erosion losses
+%       - scenario: type of erosion scenario. 
+%       - nsteps:  the number of step changes or spike erosion losses, = 0
+%       for curve model
 %       - Nlogical: a logical table n x 3 that shows which nuclides were
 %       measured for which sample (column order: 10Be, 14C, 26Al)
 %
@@ -66,7 +62,15 @@ switch scenario
     case 'samebackground_samespike'
         E = model(nsteps+1);
         changevar = model(nsteps+2:end);
-
+    case 'curve'
+        if length(model) > 2*nSamp    % if statement needed because for curve scenario initital model coes with time values and gwmcmc models don't (better to have hidden if-statement than having it in main script)
+            E = model(nsteps+1:nsteps+nSamp);
+            changevar = model(nsteps+nSamp+1:end);
+        else
+            E = model(1:+nSamp);
+            changevar = model(nSamp+1:end);
+        end
+        T = [sp.t'; 0];
 end
 
 %% run forward model

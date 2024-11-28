@@ -41,6 +41,10 @@ switch scenario
     case 'samebackground_samespike'
         prior_range = [time_prior; E; repmat(LOSS,steps,1)];  
         var_names = [var_names, 'E', arrayfun(@(x) sprintf('Loss%d', x), 1:steps, 'UniformOutput', false)];
+    case 'curve'
+        prior_range = [repmat(E, n, 1); repmat(CHG,n,1)];
+        var_names = [arrayfun(@(x) sprintf('E1sample%d', x), 1:n, 'UniformOutput', false),...
+        arrayfun(@(x) sprintf('ChangeFactor%d', x), 1:n, 'UniformOutput', false)];
 end
 
 end

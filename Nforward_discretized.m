@@ -77,7 +77,14 @@ switch scenario
         loss = varargin{1};
         E = repmat(E,nSamp,length(T));                      % make matrix of erosion rates for easy calling in concentration loop
         segment_depths = E.*T_time_spans+[inf(nSamp,1) repmat(loss',nSamp,1)];
+    case 'curve'
+        scaleFactor = varargin{1};
 
+        absolute_erosion_change = sp.curvechange .* scaleFactor; % calculate erosion rate change from relative differences from curve and scaling factor
+        % make matrix of erosion rates for different time steps by multiplying E with the change factors
+        E = repmat(E,1,length(T));
+        E(:,2:end) = E(:,2:end)+ E(:,2:end) .* absolute_erosion_change;
+        segment_depths = E.*T_time_spans;            % the exhumation occuring during every erosion time interval in cm
 end
 
 t_depths       = [fliplr(cumsum(fliplr(segment_depths(:,2:end)),2)), zeros(nSamp,1)];     % depths at every step change T in cm

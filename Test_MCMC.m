@@ -12,7 +12,8 @@ filetag = 'test';  % filetag for export
 % choose one of these erosion scenarios: 
 % 'step',  'samestep',  'samebackground_step', 'samebackground_samestep'
 % 'spike', 'samespike', 'samebackground_spike','samebackground_samespike'
-scenario = 'samebackground_spike'; 
+% curve
+scenario = 'curve'; 
 
 %% Test data. Use this to see if inversion can recover input
 n = 7;   % number of samples
@@ -20,10 +21,10 @@ tdata = make_test_data(scenario,n);
 Nlogical = [true(n,2) false(n,1)];  % only 10Be and 14C
 
 %% Priors -----------------------------------------------------------------
-T =  [1.2e3,1.7e3];      % time of step change OR spike in yrs [min,max]
-E =  [10,5e2];      % range of expected erosion rates in mm/ka  [min,max]
+T =  [1.2e3,1.7e3]; % time of step change OR spike in yrs [min,max]
+E =  [0,8e2];      % range of expected erosion rates in mm/ka  [min,max]
 LOSS = [0,200];     % loss of soil in cm [min,max], can be commented if no spike model
-CHG  = [0, 50];     % change factor of erosion rate, can be commented if no samestep model
+CHG  = [0, 50];     % change factor of erosion rate, can be commented if no samestep model. Also serves as scale factor for curve model
 
 [prior_range,var_names] = make_prior_and_varnames(scenario,T,E,LOSS,CHG,n,tdata.steps);
 
@@ -40,6 +41,7 @@ sp = Cronus_v3_spallation(tdata.lat,tdata.lon,tdata.altitude,consts);   % get sa
 mini  = initialmodel_flatprior(prior_range,nWalks,2);
 
 %% Forward model (model parameters: time, erosion, CHG/Loss)
+if strcmp(scenario,'curve'); sp.curvechange = tdata.curvechange; sp.t = tdata.t;end % for curve scenarios we need to add the relative (unscaled) changes to sample parameters for erosion calculation
 
 forward_model = @(m) Nforward_wrapper(m,sp,consts,Nmu,scenario,tdata.steps,Nlogical);
 
@@ -59,7 +61,7 @@ logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == siz
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e7,'ThinChain',5,'burnin',.2);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},5e6,'ThinChain',5,'burnin',.2);
 toc
 models = single(models); logLike = single(logLike); % save some memory
 

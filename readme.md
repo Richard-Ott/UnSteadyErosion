@@ -8,11 +8,11 @@ All models can be run for a single sample as well as a suite of data. However,
 the inversion cannot constrain meaningful results for a single sample, because there
 are less data than parameters (run isoline codes scripts for single sample).
 
-Currently 8 erosion scenarios are supported. There are two main scenario types:
+Currently 9 erosion scenarios are supported. There are two main scenario types:
 step-changes in erosion and erosion spikes. In step change models, the erosion rate
 changes at certain times, whereas in spike models a sudden soil loss is simulated
 by removing the upper part of the production profile. For these main scenarios, there
-are four sub-scenarios with varying degrees of freedom. All models allow multiple
+are four sub-scenarios with varying degrees of freedom.All models allow multiple
 changes in erosion through time. However, the number of parameters should be smaller
 than the number of data points (your nuclide measurements). Therefore, if you want
 to resolve a model with more than one change in erosion through time, choose a simpler
@@ -35,6 +35,10 @@ between catchments, but the amount of soil loss is the same.
 erosion is the same, but catchments have soil loss.
 * 'samebackground_samespike': a (multi-)spike soil loss, where all background
 erosion is the same and all soil loss heights.
+* 'curve' add a curve that mimicks the changes in erosion and that gets scaled by 
+a scaling factor. In the test data we take a pollen curve, calculate the mean tree
+pollen for certain times and inversely scale this with erosion rate. The more steps
+you allow in your curve the longer the computation will take.
 
 
 ## Production rates

@@ -1,6 +1,6 @@
 function testdata = make_test_data(scenario,n)
-%UNTITLED2 Summary of this function goes here
-%   Detailed explanation goes here
+% This function makes test data to recover for the inversion for the
+% different scenarios
 
 % location of random sample
 testdata.lat= repmat(30,n,1);
@@ -17,6 +17,7 @@ switch scenario
         testdata.t = [1500];                        % step change timing
         testdata.e = [20,50,100,40,60,80,90];       % old erosion rates of different catchments
         testdata.chg = [20];                        % change factor of erosion rate at time t
+
     case 'samebackground_step'
         testdata.t = [1500];                         % step change timing
         testdata.e = 50;                             % old erosion rates of different catchments
@@ -41,10 +42,30 @@ switch scenario
         testdata.t =   [1500,500];                      % soil loss timing
         testdata.e =   [50];                            % background erosion rates of different catchments
         testdata.loss = [10,20];                        % soil loss in cm
+
+    case 'curve'
+        % apply pollen data as test
+        curvedata = load('./data/pollen.mat');
+        pollen = curvedata.pollen;
+
+        timebreaks = [10000, 6200, 700, 0];
+        for i = 1:length(timebreaks) - 1
+            timeRange = pollen.yearsBP >= timebreaks(i+1) & pollen.yearsBP < timebreaks(i); % Define the time range for this period
+            meanPercTree(i) = mean(pollen.percTree(timeRange)); % Calculate the mean percTree for this time range
+        end
+        noTreePerc = 100-meanPercTree; 
+        curvechanges    = (noTreePerc(2:end) ./ noTreePerc(1) -1);
+
+        scaleFactor     = [10, 2, 4, 5, 0.1, 100, 20];                           
+
+        testdata.t = timebreaks(2:end-1);
+        testdata.e = [10, 500, 100, 50, 20, 80, 150];   % background erosion rate - erosion rate at start of curve
+        testdata.chg = scaleFactor;                     % this is the scaling factor of the pollen curve. E_increase = scaleFactor * curvechanges
+        testdata.curvechange = curvechanges;            % these are the base changes that will be scaled later on
 end
 
 testdata.steps = length(testdata.t);
-if isfield(testdata,'chg')
+if or(isfield(testdata,'chg'), isfield(testdata,'curve'))
     testdata.changeVariable = testdata.chg;
 elseif isfield(testdata,'loss')
     testdata.changeVariable = testdata.loss;
