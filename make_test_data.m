@@ -56,7 +56,7 @@ switch scenario
         noTreePerc = 100-meanPercTree; 
         curvechanges    = (noTreePerc(2:end) ./ noTreePerc(1) -1);
 
-        scaleFactor     = [10, 2, 4, 5, 0.1, 100, 20];                           
+        scaleFactor     = [10, 1, 4, 5, 0.1, 100, 20];                           
 
         testdata.t = timebreaks(2:end-1);
         testdata.e = [10, 500, 100, 50, 20, 80, 150];   % background erosion rate - erosion rate at start of curve

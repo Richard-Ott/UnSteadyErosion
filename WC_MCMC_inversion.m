@@ -9,9 +9,9 @@ addpath('.\CosmoTools\')
 data = readtable('data\WCdata_RFO.xlsx'); % AMS data
 nWalks = 30;                              % how many chains per sample?
 
-scenario = 'spike'; 
+scenario = 'curve'; 
 
-nsteps = 1;
+nsteps = 2;
 
 %% outline basins for binning (currently CosmoTools isnt properly integrated, should be improved)
 
@@ -31,10 +31,28 @@ dNobs= [data.N10sigma; data.N14sigma; data.N26sigma];
 
 Nlogical = [~isnan(data.N10) ~isnan(data.N14) ~isnan(data.N26)];
 
+% only for curve scenario
+if strcmp(scenario,'curve')
+    curvedata = load('./data/pollen.mat');     % load pollen data
+    pollen = curvedata.pollen;
+    
+    timebreaks = [10000, 6200, 700, 0];        % breaks in pollen data
+    for i = 1:length(timebreaks) - 1       
+        timeRange = pollen.yearsBP >= timebreaks(i+1) & pollen.yearsBP < timebreaks(i); % Define the time range for this period
+        meanPercTree(i) = mean(pollen.percTree(timeRange)); % Calculate the mean percTree for this time range
+    end
+    noTreePerc = 100-meanPercTree; 
+    curvechanges    = (noTreePerc(2:end) ./ noTreePerc(1) -1);  % erosion change, defined as fraction increase and decrease, 0 means no change in erosion
+
+    t = timebreaks(2:end-1);
+    curvechange = curvechanges;            % these are the base changes that will be scaled later on
+end
+
+
 %% Priors -----------------------------------------------------------------
-T   = [2300,2700];      % time of step change in yrs [min,max]
+T   = [0,8000];      % time of step change in yrs [min,max]
 E1  = [10,2e2];      % old erosion rate in mm/ka  [min,max]
-CHG = [0.1 100];     % increase [ ] 
+CHG = [0 100];     % increase [ ] 
 LOSS = [0,200];     % loss of soil in cm [min,max], can be commented if no spike model
 
 % calculate prior ranges
@@ -53,6 +71,7 @@ sp = Cronus_v3_spallation(lat,lon,alt,consts);   % get sample parameters (surfac
 mini  = initialmodel_flatprior(prior_range,nWalks);
 
 %% Forward model
+if strcmp(scenario,'curve'); sp.curvechange = curvechange; sp.t = t;end % for curve scenarios we need to add the relative (unscaled) changes to sample parameters for erosion calculation
 
 forward_model = @(m) Nforward_wrapper(m,sp,consts,Nmu,scenario,nsteps,Nlogical);
 
