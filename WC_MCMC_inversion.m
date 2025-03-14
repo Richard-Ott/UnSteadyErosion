@@ -9,9 +9,9 @@ addpath('.\CosmoTools\')
 data = readtable('data\WCdata_RFO.xlsx'); % AMS data
 nWalks = 30;                              % how many chains per sample?
 
-scenario = 'curve'; 
+scenario = 'step'; 
 
-nsteps = 2;
+nsteps = 1;
 
 %% outline basins for binning (currently CosmoTools isnt properly integrated, should be improved)
 
@@ -86,7 +86,7 @@ logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == siz
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e7,'ThinChain',5,'burnin',.2,'StepSize',2.5);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e6,'ThinChain',5,'burnin',.2,'StepSize',2.5);
 toc
 models = single(models); logLike = single(logLike); % save some memory
 
