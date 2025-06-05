@@ -6,17 +6,17 @@ addpath('.\online-calculators-v3\')
 addpath('.\Matlab MCMC ensemble sampler\')
 addpath('.\CosmoTools\')
 
-data = readtable('data\WCdata_RFO.xlsx'); % AMS data
-nWalks = 30;                              % how many chains per sample?
+data = readtable('data\Elba_data.xlsx'); % AMS data
+nWalks = 1;                              % how many chains per sample?
 
-scenario = 'samestep'; 
+scenario = 'step'; 
 
 nsteps = 1;
 
 %% outline basins for binning (currently CosmoTools isnt properly integrated, should be improved)
 
-SAMS = cosmosampleread('data\WCdata_RFO.xlsx');
-DEM  = GRIDobj('.\data\crete_clipped_utm.tif');
+SAMS = cosmosampleread('data\Elba_data.xlsx');
+DEM  = GRIDobj('.\data\Elbadem.tif');
 SAMS = cosmowatersheds(SAMS,DEM);
 
 % get median lat, lon, altitude for production calculation
@@ -65,7 +65,6 @@ logLike    = @(m) sum(lognormpdf(Nobs(Nlogical), forward_model(m), dNobs(Nlogica
 
 logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == size(prior_range,1);
 
-%% Posterior sampling
 %% Posterior sampling
 
 walkers = Egholm_MCMC(nWalks,Nobs,dNobs,mini,prior_range,forward_model,Nlogical);

@@ -3,9 +3,9 @@ Nobs=Nobs(Nlogical);
 dNobs=dNobs(Nlogical);
 
 %save some general MCMC paramers
-burnin = 5e4;              % burn in iterations (accepted)
-Nmod = 2e5;                % number of accpected samples
-Nmax = 2e6;                % maximum number of models
+burnin = 1e4;%5e4;              % burn in iterations (accepted)
+Nmod = 1e5;%2e5;                % number of accpected samples
+Nmax = 2e5;%2e6;                % maximum number of models
 Nmp  = size(mini,1);       % number of model parameters
 Temp = 1;
 Cobs = diag(dNobs.^2);
