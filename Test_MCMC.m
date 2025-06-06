@@ -5,14 +5,14 @@ close all
 addpath('.\online-calculators-v3\')
 addpath('.\Matlab MCMC ensemble sampler\')
 
-nWalks = 2;       % how many MCMC chains?
+nWalks = 1;       % how many MCMC chains?
 export = 0;        % do you want to export the data and plots?
 filetag = 'test';  % filetag for export
 
 % choose one of these erosion scenarios: 
 % 'step',  'samestep',  'samebackground_step', 'samebackground_samestep'
 % 'spike', 'samespike', 'samebackground_spike','samebackground_samespike'
-scenario = 'spike'; 
+scenario = 'step'; 
 
 %% Test data. Use this to see if inversion can recover input
 n = 7;   % number of samples
@@ -21,7 +21,7 @@ Nlogical = [true(n,2) false(n,1)];  % only 10Be and 14C
 
 %% Priors -----------------------------------------------------------------
 T =  [1,10e3];      % time of step change OR spike in yrs [min,max]
-E =  [10,5e2];      % range of expected erosion rates in mm/ka  [min,max]
+E =  [10,5e3];      % range of expected erosion rates in mm/ka  [min,max]
 LOSS = [0,200];     % loss of soil in cm [min,max], can be commented if no spike model
 CHG  = [0, 50];     % change factor of erosion rate, can be commented if no samestep model
 
@@ -73,7 +73,7 @@ h2 = ecornerplot(walkers,'ks',true,'color',[.3 .3 .3],'name',var_names,'bestmode
 
 %% Barplot of parameters
 
-h3 = barplot_parameters(walkers,var_names,'bestmodel',best_model,'truevals',mtest);
+h3 = barplot_parameters(walkers,var_names,prior_range,'bestmodel',best_model,'truevals',mtest);
 
 %% Comparison best model and data
 

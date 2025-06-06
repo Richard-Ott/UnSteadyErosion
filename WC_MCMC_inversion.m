@@ -7,11 +7,12 @@ addpath('.\Matlab MCMC ensemble sampler\')
 addpath('.\CosmoTools\')
 
 data = readtable('data\Elba_data.xlsx'); % AMS data
-nWalks = 1;                              % how many chains per sample?
+nWalks = 3;                              % how many chains per sample?
 
 scenario = 'step'; 
 
 nsteps = 1;
+export = false;
 
 %% outline basins for binning (currently CosmoTools isnt properly integrated, should be improved)
 
@@ -32,10 +33,10 @@ dNobs= [data.N10sigma; data.N14sigma; data.N26sigma];
 Nlogical = [~isnan(data.N10) ~isnan(data.N14) ~isnan(data.N26)];
 
 %% Priors -----------------------------------------------------------------
-T   = [1,10e3];      % time of step change in yrs [min,max]
-E1  = [10,3e2];      % old erosion rate in mm/ka  [min,max]
+T   = [2e3,2.1e3];      % time of step change in yrs [min,max]
+E1  = [1,5e3];       % old erosion rate in mm/ka  [min,max]
 CHG = [0.1 100];     % increase [ ] 
-LOSS = [0,200];     % loss of soil in cm [min,max], can be commented if no spike model
+LOSS = [0,200];      % loss of soil in cm [min,max], can be commented if no spike model
 
 % calculate prior ranges
 [prior_range,var_names] = make_prior_and_varnames(scenario,T,E1,LOSS,CHG,length(data.N10),nsteps);
@@ -89,7 +90,7 @@ h2 = ecornerplot(walkers,'ks',true,'color',[.3 .3 .3],'name',var_names,'bestmode
 
 %% Barplot of parameters
 
-h3 = barplot_parameters(walkers,var_names,'bestmodel',best_model);
+h3 = barplot_parameters(walkers,var_names,prior_range,'bestmodel',best_model);
 
 %% Comparison best model and data
 

@@ -5,7 +5,7 @@ dNobs=dNobs(Nlogical);
 %save some general MCMC paramers
 burnin = 1e4;%5e4;              % burn in iterations (accepted)
 Nmod = 1e5;%2e5;                % number of accpected samples
-Nmax = 2e5;%2e6;                % maximum number of models
+Nmax = 5e5;%2e6;                % maximum number of models
 Nmp  = size(mini,1);       % number of model parameters
 Temp = 1;
 Cobs = diag(dNobs.^2);
@@ -83,18 +83,18 @@ for nw = 1:nWalks
             
         elseif (acount < Nmod)
 
-            k = k*((1-accfac) + accfac*accrat/0.3);    
+            k = k*((1-accfac) + accfac*accrat/0.3);  
+            
+
                         
         end        
-        
+        % make sure step size does not get too small
+        k = max(min(k, 0.1), 1e-2);  % prevent k from collapsing or blowing up
+
         if (bcount < burnin) Temp = 1.0 + 20.0*(burnin-bcount)/burnin;
         else Temp = 1.0;
         end
             
-        % weird RO edit ------------------------------------------
-        % if k < 0.005  % make sure step sizes dont get too small, this seems to happen
-        %     k = 0.005;
-        % end
         %********* propose new parameters ************
         
         %random step
@@ -125,12 +125,13 @@ for nw = 1:nWalks
         gmp = forward_model(up);
                
         %Acceptance critieria
-        % if (acount + bcount) > 1000
         restot = (Nobs(:)-gmp(:))'*Cobsinv*(Nobs(:)-gmp(:))/Temp;
-        % else
-            % restot = (Nobs(:)-gmp(:))'*CobsinvSTART*(Nobs(:)-gmp(:))/Temp;
-        % end
-        rfrac = exp(-0.5*restot)/exp(-0.5*res_current);
+
+        % rfrac = exp(-0.5*restot)/exp(-0.5*res_current);
+
+        log_rfrac = -0.5 * (restot - res_current);
+        rfrac = exp(min(0, log_rfrac));  % min ensures we don’t get exp(large) > 1
+
         alpha = rand(1);
     
     
