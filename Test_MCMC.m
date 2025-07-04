@@ -1,9 +1,7 @@
 clear
 clc
 close all
-
-addpath('.\online-calculators-v3\')
-addpath('.\Matlab MCMC ensemble sampler\')
+addpath(genpath(pwd))    % pwd = “present working directory”
 
 nWalks = 25;       % how many MCMC chains?
 export = 0;        % do you want to export the data and plots?
@@ -13,7 +11,8 @@ filetag = 'test';  % filetag for export
 % 'step',  'samestep',  'samebackground_step', 'samebackground_samestep'
 % 'spike', 'samespike', 'samebackground_spike','samebackground_samespike'
 % 'curve'
-scenario = 'curve'; 
+scenario = 'step'; 
+soil_mixing = false;
 
 %% Test data. Use this to see if inversion can recover input
 n = 7;   % number of samples
@@ -35,6 +34,14 @@ CHG  = [0, 50];     % change factor of erosion rate, can be commented if no same
 %% Production rates
 
 sp = Cronus_v3_spallation(tdata.lat,tdata.lon,tdata.altitude,consts);   % get sample parameters (surface procution, pressure)
+
+%% soil mixing
+
+if soil_mixing
+    sp.mix = true;    % make flag
+    sp.mixing = 3e-5; % mixing diffusivity
+    sp.dzmix = 0.3;   % mixing depth (m)
+end
 
 %% initial guess
 

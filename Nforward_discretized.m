@@ -27,6 +27,14 @@ function N = Nforward_discretized(E,T,sp,consts,Nmu,scenario,Nlogical,varargin)
 %
 % Richard Ott & Dirk Scherler, 2024
 
+% Parse optional inputs
+p = inputParser;
+addParameter(p, 'change_variable', []);
+addParameter(p, 'mixing_depth', []);
+parse(p, varargin{:});
+CHG = p.Results.change_variable;
+mix_depth = p.Results.mixing_depth;
+
 nSamp = length(sp.P10spal);
 
 E = E./1e4;   % convert to cm/a
@@ -39,7 +47,6 @@ switch scenario
         segment_depths = E.*T_time_spans;            % the exhumation occuring during every erosion time interval in cm
 
     case 'samestep'
-        CHG = varargin{1};
         % make matrix of erosion rates for different time steps by multiplying E
         % with the change factors
         E = [E, repmat(E,1,length(CHG))];
@@ -47,38 +54,32 @@ switch scenario
         segment_depths = E.*T_time_spans;            % the exhumation occuring during every erosion time interval in cm
 
     case 'samebackground_step'
-        CHG = varargin{1};
         E = repmat(E,nSamp,length(T));
         E(:,2:end) = E(:,2:end) .* CHG;
         segment_depths = E.*T_time_spans;            % the exhumation occuring during every erosion time interval in cm
 
     case 'samebackground_samestep'
-        CHG = varargin{1};
         E = repmat(E,nSamp,length(T));
         E(:,2:end) = E(:,2:end) * diag(CHG);
         segment_depths = E.*T_time_spans;            % the exhumation occuring during every erosion time interval in cm
 
     case 'spike'
-        loss = varargin{1};
         E = repmat(E,1, length(T));                      % make matrix of erosion rates for easy calling in concentration loop
-        segment_depths = E.*T_time_spans+[inf(nSamp,1) loss];     % calcuate the exhumation occuring during every erosion time interval in cm
+        segment_depths = E.*T_time_spans+[inf(nSamp,1) CHG];     % calcuate the exhumation occuring during every erosion time interval in cm
 
     case 'samespike'
-        loss = varargin{1};
         E = repmat(E,1, length(T));
-        segment_depths = E.*T_time_spans+[inf(nSamp,1) repmat(loss',nSamp,1)];     % calcuate the exhumation occuring during every erosion time interval in cm
+        segment_depths = E.*T_time_spans+[inf(nSamp,1) repmat(CHG',nSamp,1)];     % calcuate the exhumation occuring during every erosion time interval in cm
 
     case 'samebackground_spike'
-        loss = varargin{1};
         E = repmat(E,nSamp,length(T));                      % make matrix of erosion rates for easy calling in concentration loop
-        segment_depths = E.*T_time_spans+[inf(nSamp,1) loss];
+        segment_depths = E.*T_time_spans+[inf(nSamp,1) CHG];
 
     case 'samebackground_samespike'
-        loss = varargin{1};
         E = repmat(E,nSamp,length(T));                      % make matrix of erosion rates for easy calling in concentration loop
-        segment_depths = E.*T_time_spans+[inf(nSamp,1) repmat(loss',nSamp,1)];
+        segment_depths = E.*T_time_spans+[inf(nSamp,1) repmat(CHG',nSamp,1)];
     case 'curve'
-        scaleFactor = varargin{1};
+        scaleFactor = CHG;
 
         absolute_erosion_change = sp.curvechange .* scaleFactor; % calculate erosion rate change from relative differences from curve and scaling factor
         % make matrix of erosion rates for different time steps by multiplying E with the change factors
@@ -88,6 +89,23 @@ switch scenario
 end
 
 t_depths       = [fliplr(cumsum(fliplr(segment_depths(:,2:end)),2)), zeros(nSamp,1)];     % depths at every step change T in cm
+
+% add depths for soil mixing
+interval_spacing = 10;   % depth intervals for which to compute concentration
+mixing_depths = 0:interval_spacing:mix_depth;
+
+% Add mix_depth offsets to create new slices
+if isempty(mix_depth) % no mixing
+    nmix = 1;
+    t_depths_3D = t_depths;
+
+else % soil mixing depths
+    nmix = length(mixing_depths);
+    for i = 1:nmix
+    t_depths_3D(:,:,i) = t_depths + mixing_depths(i);
+    end
+end
+
 
 
 %% start cosmo calulcation
@@ -116,44 +134,49 @@ P26(:,1) = sp.P26spal;
 Al = any(Nlogical(:,3));
 
 % calculate concentrations --------------------------------------------
-N10 = 0;
-N14 = 0; 
+N10 = zeros(nSamp, nmix);
+N14 = zeros(nSamp, nmix); 
 
 % loop through production pathways (first spallation, then muons)
 for i = 1:2 
     
     % segments of production profile
-    N10i = 0;
-    N14i = 0;
+    N10i = zeros(nSamp, nmix);
+    N14i = zeros(nSamp,nmix);
     
     for j = 1:length(T)  % loop through erosion segments
 
         beta10 = rho .* E(:,j) ./ att_l_10(i) + consts.l10;
         beta14 = rho .* E(:,j) ./ att_l_14(i) + consts.l14;
+        
+        N10_segment = zeros(nSamp, nmix);
+        N14_segment = zeros(nSamp, nmix); 
+
+        for d = 1:nmix  % loop through soil mixing depths
+            if i==1
+                N10_segment(:,d) = P10(:,1)./beta10 .* ...                    % production
+                    exp(-(rho .* t_depths_3D(:,j,d) ./ att_l_10(i))) .* ...    % depth cut-off
+                    (1 - exp(-beta10.*T_time_spans(j)));              % time to develop the concentration profile
+                N14_segment(:,d) = P14(:,1)./beta14 .* ...
+                    exp(-(rho .* t_depths_3D(:,j,d) ./ att_l_14(i))) .* ...
+                    (1 - exp(-beta14.*T_time_spans(j)));
+            else 
+                % muon production
+                P10(:,2) = intNmu(E(:,j).*rho,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N10quartz); 
+                P14(:,2) = intNmu(E(:,j).*rho,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N14quartz); 
     
-        if i==1
-            N10_segment = P10(:,1)./beta10 .* ...                    % production
-                exp(-(rho .* t_depths(:,j) ./ att_l_10(i))) .* ...    % depth cut-off
-                (1 - exp(-beta10.*T_time_spans(j)));              % time to develop the concentration profile
-            N14_segment = P14(1)./beta14 .* ...
-                exp(-(rho .* t_depths(:,j) ./ att_l_14(i))) .* ...
-                (1 - exp(-beta14.*T_time_spans(j)));
-        else 
-            % muon production
-            P10(:,2) = intNmu(E(:,j).*rho,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N10quartz); 
-            P14(:,2) = intNmu(E(:,j).*rho,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N14quartz); 
-
-            if any(isnan(P10(:,2)))   % this is necessary for very fast erosion rates that surpass the pre-calculated rates in Cronus
-                P10(:,2) = zeros(nSamp,1);
-                P14(:,2) = zeros(nSamp,1);
+                if any(isnan(P10(:,2)))   % this is necessary for very fast erosion rates that surpass the pre-calculated rates in Cronus
+                    P10(:,2) = zeros(nSamp,1);
+                    P14(:,2) = zeros(nSamp,1);
+                end
+    
+                N10_segment(:,d) = P10(:,2) .* ...                           % production, here now beta is needed because Cronus outputs total production
+                    exp(-(rho .* t_depths_3D(:,j,d) ./ att_l_10(2))) .* ...    % depth cut-off
+                    (1 - exp(-beta10.*T_time_spans(:,j)));              % time to develop the concentration profile
+                N14_segment(:,d) = P14(:,2) .* ...
+                    exp(-(rho .* t_depths_3D(:,j,d) ./ att_l_14(2))) .* ...
+                    (1 - exp(-beta14.*T_time_spans(:,j)));
             end
-
-            N10_segment = P10(:,2) .* ...                           % production, here now beta is needed because Cronus outputs total production
-                exp(-(rho .* t_depths(:,j) ./ att_l_10(2))) .* ...    % depth cut-off
-                (1 - exp(-beta10.*T_time_spans(:,j)));              % time to develop the concentration profile
-            N14_segment = P14(:,2) .* ...
-                exp(-(rho .* t_depths(:,j) ./ att_l_14(2))) .* ...
-                (1 - exp(-beta14.*T_time_spans(:,j)));
         end
 
         N10i = N10i .* exp(-consts.l10.*T_time_spans(j)) + N10_segment; % add segments and don't forget decay
@@ -166,35 +189,52 @@ end
  
 
 if Al       % calculate Al separetely assuming that it will be used the least and we run code faster if we dont calculate this
-N26=0;
+N26=zeros(nmix,1);
     for i = 1:2 
-    N26i = 0;    
+    N26i = zeros(nSamp, nmix);  
     for j = 1:length(T)  % loop through erosion segments
+
         beta26 = rho .* E(:,j) ./ att_l_26(i) + consts.l26;
-        if i==1
-            N26_segment = P26(:,1)./beta26 .* ...                    % production
-                exp(-(rho .* t_depths(:,j) ./ att_l_26(i))) .* ...    % depth cut-off
-                (1 - exp(-beta26.*T_time_spans(j)));              % time to develop the concentration profile
-        else 
-            % muon production
-            P26(:,2) = intNmu(E(:,j).*rho,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N26quartz); 
-            if any(isnan(P26(:,2)))   % this is necessary for very fast erosion rates that surpass the pre-calculated rates in Cronus
-                P26(:,2) = zeros(nSamp,1);
+        
+        N26_segment = zeros(nSamp, nmix);
+        for d = 1:nmix
+            if i==1
+                N26_segment(:,d) = P26(:,1)./beta26 .* ...                    % production
+                    exp(-(rho .* t_depths_3D(:,j,d) ./ att_l_26(i))) .* ...    % depth cut-off
+                    (1 - exp(-beta26.*T_time_spans(j)));              % time to develop the concentration profile
+            else 
+                % muon production
+                P26(:,2) = intNmu(E(:,j).*rho,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N26quartz); 
+                if any(isnan(P26(:,2)))   % this is necessary for very fast erosion rates that surpass the pre-calculated rates in Cronus
+                    P26(:,2) = zeros(nSamp,1);
+                end
+                N26_segment(:,d) = P26(:,2) .* ...                           % production, here now beta is needed because Cronus outputs total production
+                    exp(-(rho .* t_depths_3D(:,j,d) ./ att_l_26(2))) .* ...    % depth cut-off
+                    (1 - exp(-beta26.*T_time_spans(:,j)));              % time to develop the concentration profile
             end
-            N26_segment = P26(:,2) .* ...                           % production, here now beta is needed because Cronus outputs total production
-                exp(-(rho .* t_depths(:,j) ./ att_l_26(2))) .* ...    % depth cut-off
-                (1 - exp(-beta26.*T_time_spans(:,j)));              % time to develop the concentration profile
         end
+
+        
         N26i = N26i .* exp(-consts.l26.*T_time_spans(j)) + N26_segment; % add segments and don't forget decay
     end
     N26 = N26 + N26i;
     end
 end
 
+%% do soil mixing ---------------------------------------------------------
+% simply average concentrations acros depth intervals to get concentration
+% under soil mixing
+N10_mixed = mean(N10,2);
+N14_mixed = mean(N14,2);
 if Al
-    Ncalculated = [N10;N14;N26];
+    N26_mixed = mean(N26,2);
+end
+%% output
+
+if Al
+    Ncalculated = [N10_mixed;N14_mixed;N26_mixed];
 else
-    Ncalculated = [N10;N14; zeros(nSamp,1)];
+    Ncalculated = [N10_mixed;N14_mixed; zeros(nSamp,1)];
 end
 N = Ncalculated(Nlogical);  % only pass on nuclide values that were measured
 end
