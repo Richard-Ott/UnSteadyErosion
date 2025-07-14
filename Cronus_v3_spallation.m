@@ -22,6 +22,9 @@ sp.P10spal = sf_St .* P10_SLHL;              % site specific spallation producti
 sp.P14spal = sf_St .* P14_SLHL;
 sp.P26spal = sf_St .* P26_SLHL;
 
+% define soil mixing parameters
 sp.mix = false; % set soil mixing per default as false. it gets upated later in main script
+sp.mixing = 0;
+sp.dzmix = 1;  % put a 1 here that no error are being produced, but the zero for sp.mixing will result in no mixing
 
 end

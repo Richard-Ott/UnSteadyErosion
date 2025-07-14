@@ -12,7 +12,7 @@ filetag = 'test';  % filetag for export
 % 'spike', 'samespike', 'samebackground_spike','samebackground_samespike'
 % 'curve'
 scenario = 'step'; 
-soil_mixing = false;
+soil_mixing = true;
 
 %% Test data. Use this to see if inversion can recover input
 n = 7;   % number of samples
@@ -40,7 +40,7 @@ sp = Cronus_v3_spallation(tdata.lat,tdata.lon,tdata.altitude,consts);   % get sa
 if soil_mixing
     sp.mix = true;    % make flag
     sp.mixing = 3e-5; % mixing diffusivity
-    sp.dzmix = 0.3;   % mixing depth (m)
+    sp.dzmix = 0.1;   % mixing depth (m)
 end
 
 %% initial guess
@@ -50,7 +50,7 @@ mini  = initialmodel_flatprior(prior_range,nWalks,2);
 %% Forward model (model parameters: time, erosion, CHG/Loss)
 if strcmp(scenario,'curve'); sp.curvechange = tdata.curvechange; sp.t = tdata.t;end % for curve scenarios we need to add the relative (unscaled) changes to sample parameters for erosion calculation
 
-forward_model = @(m) Nforward_wrapper(m,sp,consts,Nmu,scenario,tdata.steps,Nlogical);
+forward_model = @(m) Nforward_wrapper(m,sp,consts,scenario,tdata.steps,Nlogical);
 
 %% generate test data to see if inversion can succesfully identify these data
 

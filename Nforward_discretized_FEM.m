@@ -1,4 +1,4 @@
-function N = Nforward_discretized_FEM(E,T,sp,consts,Nmu,scenario,Nlogical,varargin)
+function N = Nforward_discretized_FEM(E,T,sp,consts,scenario,Nlogical,varargin)
 % This function calculates concentrations N10 and N14 for mutiple step 
 % changes in erosion and for multiple samples at once.
 %
@@ -30,70 +30,48 @@ function N = Nforward_discretized_FEM(E,T,sp,consts,Nmu,scenario,Nlogical,vararg
 % Parse optional inputs
 p = inputParser;
 addParameter(p, 'change_variable', []);
-addParameter(p, 'diffusivity', []);
 parse(p, varargin{:});
 CHG = p.Results.change_variable;
-diffusivity = p.Results.diffusivity;
 
 nSamp = length(sp.P10spal);
 
-E = E./1e4;   % convert to cm/a
+E = E./1e6;   % convert to m/a
 T_time_spans   = [inf, diff(T')*(-1)];        % time span of every time interval between erosion changes
 
 %% reshape erosion rate array and calculate depths at steps for different scenarios
 
 switch scenario
-    case 'step'
-        segment_depths = E.*T_time_spans;            % the exhumation occuring during every erosion time interval in cm
-
     case 'samestep'
         % make matrix of erosion rates for different time steps by multiplying E
         % with the change factors
         E = [E, repmat(E,1,length(CHG))];
         E(:,2:end) = E(:,2:end) * diag(CHG);
-        segment_depths = E.*T_time_spans;            % the exhumation occuring during every erosion time interval in cm
-
     case 'samebackground_step'
         E = repmat(E,nSamp,length(T));
         E(:,2:end) = E(:,2:end) .* CHG;
-        segment_depths = E.*T_time_spans;            % the exhumation occuring during every erosion time interval in cm
-
     case 'samebackground_samestep'
         E = repmat(E,nSamp,length(T));
         E(:,2:end) = E(:,2:end) * diag(CHG);
-        segment_depths = E.*T_time_spans;            % the exhumation occuring during every erosion time interval in cm
-
     case 'spike'
         E = repmat(E,1, length(T));                      % make matrix of erosion rates for easy calling in concentration loop
-        segment_depths = E.*T_time_spans+[inf(nSamp,1) CHG];     % calcuate the exhumation occuring during every erosion time interval in cm
-
     case 'samespike'
         E = repmat(E,1, length(T));
-        segment_depths = E.*T_time_spans+[inf(nSamp,1) repmat(CHG',nSamp,1)];     % calcuate the exhumation occuring during every erosion time interval in cm
-
     case 'samebackground_spike'
         E = repmat(E,nSamp,length(T));                      % make matrix of erosion rates for easy calling in concentration loop
-        segment_depths = E.*T_time_spans+[inf(nSamp,1) CHG];
-
     case 'samebackground_samespike'
         E = repmat(E,nSamp,length(T));                      % make matrix of erosion rates for easy calling in concentration loop
-        segment_depths = E.*T_time_spans+[inf(nSamp,1) repmat(CHG',nSamp,1)];
     case 'curve'
         scaleFactor = CHG;
-
         absolute_erosion_change = sp.curvechange .* scaleFactor; % calculate erosion rate change from relative differences from curve and scaling factor
         % make matrix of erosion rates for different time steps by multiplying E with the change factors
         E = repmat(E,1,length(T));
         E(:,2:end) = E(:,2:end)+ E(:,2:end) .* absolute_erosion_change;
-        segment_depths = E.*T_time_spans;            % the exhumation occuring during every erosion time interval in cm
 end
-
-t_depths       = [fliplr(cumsum(fliplr(segment_depths(:,2:end)),2)), zeros(nSamp,1)];     % depths at every step change T in cm
-
 
 %% start cosmo calulcation
 
 % Geometry of profile -----------------------------------------------------
+
 D = 25;   % depth of profile (m)
 Nn = 100; % number of nodes
 z = linspace(0,1,Nn);
@@ -102,7 +80,7 @@ ze = .5*(z(1:(Nn-1))+z(2:Nn));
 
 
 TOPO = [1:Nn-1;2:Nn]';  % finite element topogology
-dl = diff(z);
+dl = diff(z);       
 
 Ne = Nn - 1;            % number of elements
 
@@ -134,13 +112,27 @@ P14(:,1) = sp.P14spal;
 P26(:,1) = sp.P26spal; 
 
 % muon surfce production rates (no erosion)
-P10(:,2) = intNmu(0,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N10quartz); 
-P14(:,2) = intNmu(0,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N14quartz); 
+P10(:,2) = consts.Pmu0(4).* exp((1013.25-sp.pressure)./att_l_10(2)'); 
+P14(:,2) = consts.Pmu0(5).* exp((1013.25-sp.pressure)./att_l_14(2)');
 
 % production profiles
-P10 = P10(:,1)*exp(-z(:)*100*rho/att_l_10(1))' + P10(:,2).* exp(-z(:)*100*rho/att_l_10(2))'; % multiply by hundred to convert depth to cm
-P14 = P14(:,1)*exp(-z(:)*100*rho/att_l_14(1))' + P14(:,2).* exp(-z(:)*100*rho/att_l_14(2))';
+P10profile = P10(:,1)*exp(-z(:)*100*rho/att_l_10(1))' + P10(:,2).* exp(-z(:)*100*rho/att_l_10(2))'; % multiply by hundred to convert depth to cm
+P14profile = P14(:,1)*exp(-z(:)*100*rho/att_l_14(1))' + P14(:,2).* exp(-z(:)*100*rho/att_l_14(2))';
+P10profile = P10profile';  P14profile = P14profile';
 
+%% debugging test compare to Knudsen
+E = ones(size(E)).*5e-6;  % debugging
+% rho = 1.9;  % debugging test
+% P10(:,1) = 4;
+% P10(:,2) = P10(:,1).*0.015;
+% P10(:,3) = P10(:,1).*0.005;
+% 
+% att_l_10(1) = 150;          % spallation
+% att_l_10(2) = 1500;   % muon 
+% att_l_10(3) = 4320;   % muon 
+% 
+% P10 = P10(:,1)*exp(-z(:)*100*rho/att_l_10(1))' + P10(:,2).* exp(-z(:)*100*rho/att_l_10(2))'; % multiply by hundred to convert depth to cm
+% P10 = P10(:);
 %% calculate steady state starting profile %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 N10 = cell(nSamp,1);
@@ -163,8 +155,8 @@ for s = 1:nSamp
       K14(TOPO(i,:),TOPO(i,:)) = K14(TOPO(i,:),TOPO(i,:)) + Ke14;
       
       %add to Load vector
-      fe10 = M1*dl(i)*P10(TOPO(i,:)');
-      fe14 = M1*dl(i)*P14(TOPO(i,:)');
+      fe10 = M1*dl(i)*P10profile(TOPO(i,:)',s);
+      fe14 = M1*dl(i)*P14profile(TOPO(i,:)',s);
       
       f10(TOPO(i,:)) = f10(TOPO(i,:)) + fe10;
       f14(TOPO(i,:)) = f14(TOPO(i,:)) + fe14;
@@ -185,38 +177,38 @@ end
 % loop through erosion history segments
 for s = 1:nSamp
     for t = 1:length(T)-1  
-        
+
         % duration of this erosion period
         dt = T_time_spans(t+1);
-        
+
         %initiate matrices
         K10 = sparse(Nn,Nn);
         f10 = sparse(Nn,1);
         K14 = sparse(Nn,Nn);
         f14 = sparse(Nn,1);
-    
+
         % loop elements
         for i=1:Ne
-        
+
           %add to stiffness matrix
           Ke10 = (1+dt*l10)*M1*dl(i) - E(s,t)*dt*M2+dmix(i) * dt*M3/dl(i);
           K10(TOPO(i,:),TOPO(i,:)) = K10(TOPO(i,:),TOPO(i,:)) + Ke10;
           Ke14 = (1+dt*l14)*M1*dl(i) - E(s,t)*dt*M2+dmix(i)*dt*M3/dl(i);
           K14(TOPO(i,:),TOPO(i,:)) = K14(TOPO(i,:),TOPO(i,:)) + Ke14;
-          
+
           %add to Load vector
-          fe10 = M1*N10{s}(TOPO(i,:)')*dl(i)+dt*M1*dl(i)*P10(TOPO(i,:)');
-          fe14 = M1*N14{s}(TOPO(i,:)')*dl(i)+dt*M1*dl(i)*P14(TOPO(i,:)');
-          
+          fe10 = M1*N10{s}(TOPO(i,:)')*dl(i)+dt*M1*dl(i)*P10profile(TOPO(i,:)',s);
+          fe14 = M1*N14{s}(TOPO(i,:)')*dl(i)+dt*M1*dl(i)*P14profile(TOPO(i,:)',s);
+
           f10(TOPO(i,:)) = f10(TOPO(i,:)) + fe10;
           f14(TOPO(i,:)) = f14(TOPO(i,:)) + fe14;
-        
+
         end
-          
+
         %Lower boundary condition
         [K10,f10] = ebc(K10,f10,Nn,0);
         [K14,f14] = ebc(K14,f14,Nn,0);
-        
+
         %update profiles
         N10{s} = full(K10\f10);
         N14{s} = full(K14\f14);

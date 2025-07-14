@@ -1,4 +1,4 @@
-function N = Nforward_wrapper(model,sp,consts,Nmu,scenario,nsteps,Nlogical,varargin)
+function N = Nforward_wrapper(model,sp,consts,scenario,nsteps,Nlogical)
 % This is a wrapper function for Nforward_discretized for easy use with the
 % MCMC algorithm.
 % Richard Ott, 2024
@@ -20,9 +20,6 @@ function N = Nforward_wrapper(model,sp,consts,Nmu,scenario,nsteps,Nlogical,varar
 %
 % Richard Ott 2024
 
-if nargin == 8 
-    mix_depth = varargin{1};   % soil mixing depth if available
-end 
 
 nSamp = length(sp.P10spal);
 
@@ -79,16 +76,10 @@ switch scenario
 end
 
 args = {};  % Start with empty optional arguments for forwarsd model
-
 if exist('changevar', 'var');  args = [args, {'change_variable', changevar}]; end
-if exist('mix_depth', 'var');  args = [args, {'mixing_depth', mix_depth}]; end
 
-%% run forward model
-if sp.mix
-    N = Nforward_discretized_FEM(E,T,sp,consts,Nmu,scenario,Nlogical,args{:});
-else
-    N = Nforward_discretized(E,T,sp,consts,Nmu,scenario,Nlogical,args{:});
-end
+% run forward model
+N = Nforward_discretized_FEM(E,T,sp,consts,scenario,Nlogical,args{:});
 
 
 end
