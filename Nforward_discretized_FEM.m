@@ -121,7 +121,7 @@ P14profile = P14(:,1)*exp(-z(:)*100*rho/att_l_14(1))' + P14(:,2).* exp(-z(:)*100
 P10profile = P10profile';  P14profile = P14profile';
 
 %% debugging test compare to Knudsen
-E = ones(size(E)).*5e-6;  % debugging
+% E = ones(size(E)).*5e-6;  % debugging
 % rho = 1.9;  % debugging test
 % P10(:,1) = 4;
 % P10(:,2) = P10(:,1).*0.015;

@@ -78,7 +78,7 @@ posterior_like = squeeze(logLike(2,:,:));
 [best_walker_like, best_walker_index] = max(posterior_like,[],2);
 [best_model_like, best_index] = max(best_walker_like);
 best_model = models(:,best_index,best_walker_index(best_index));
-best_pred = forward_model(best_model);
+best_pred = forward_model(double(best_model));
 
 %% Autocorrelation
 
@@ -94,7 +94,7 @@ h3 = ecornerplot(models,'ks',true,'color',[.3 .3 .3],'name',var_names,'bestmodel
 
 %% Barplot of parameters
 
-h4 = barplot_parameters(models,var_names,'bestmodel',best_model,'truevals',mtest);
+h4 = barplot_parameters(models,var_names,prior_range,'bestmodel',best_model,'truevals',mtest);
 
 %% Comparison best model and data
 
