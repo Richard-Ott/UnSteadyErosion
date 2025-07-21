@@ -64,7 +64,7 @@ LOSS = [0,200];     % loss of soil in cm [min,max], can be commented if no spike
 
 %% Production rates
 
-sp = Cronus_v3_spallation(lat,lon,alt,consts);   % get sample parameters (surface procution, pressure)
+sp = sample_parameters(lat,lon,alt,consts);   % get sample parameters (surface procution, pressure)
 
 %% initial guess
 

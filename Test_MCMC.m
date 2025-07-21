@@ -3,7 +3,7 @@ clc
 close all
 addpath(genpath(pwd))    % pwd = “present working directory”
 
-nWalks = 25;       % how many MCMC chains?
+nWalks = 30;       % how many MCMC chains?
 export = 0;        % do you want to export the data and plots?
 filetag = 'test';  % filetag for export
 
@@ -33,7 +33,7 @@ CHG  = [0, 50];     % change factor of erosion rate, can be commented if no same
 
 %% Production rates
 
-sp = Cronus_v3_spallation(tdata.lat,tdata.lon,tdata.altitude,consts);   % get sample parameters (surface procution, pressure)
+sp = sample_parameters(tdata.lat,tdata.lon,tdata.altitude,consts);   % get sample parameters (surface procution, pressure)
 
 %% soil mixing
 

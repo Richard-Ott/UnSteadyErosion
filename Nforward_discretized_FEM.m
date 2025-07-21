@@ -98,41 +98,11 @@ l10 = consts.l10;
 l14 = consts.l14;
 l26 = consts.l26;
 
-% attentuation lengths
-att_l_10(1) = consts.L_sp;          % spallation
-att_l_10(2) = consts.L_mu_atm(4);   % muon 
-att_l_14(1) = consts.L_sp;          % spallation
-att_l_14(2) = consts.L_mu_atm(5);   % muon 
-att_l_26(1) = consts.L_sp;          % spallation
-att_l_26(2) = consts.L_mu_atm(7);   % muon 
-
-% spallation surface production rates 
-P10(:,1) = sp.P10spal; 
-P14(:,1) = sp.P14spal; 
-P26(:,1) = sp.P26spal; 
-
-% muon surfce production rates (no erosion)
-P10(:,2) = consts.Pmu0(4).* exp((1013.25-sp.pressure)./att_l_10(2)'); 
-P14(:,2) = consts.Pmu0(5).* exp((1013.25-sp.pressure)./att_l_14(2)');
-
 % production profiles
-P10profile = P10(:,1)*exp(-z(:)*100*rho/att_l_10(1))' + P10(:,2).* exp(-z(:)*100*rho/att_l_10(2))'; % multiply by hundred to convert depth to cm
-P14profile = P14(:,1)*exp(-z(:)*100*rho/att_l_14(1))' + P14(:,2).* exp(-z(:)*100*rho/att_l_14(2))';
+P10profile = sp.P10spal.*exp(-z(:)*100*rho/consts.L_sp)' + sp.P10_nm' .* exp(-z(:)*100*rho./sp.L_nm_10)' + sp.P10_fm' .* exp(-z(:)*100*rho./sp.L_fm_10)'; % multiply by hundred to convert depth to cm
+P14profile = sp.P14spal.*exp(-z(:)*100*rho/consts.L_sp)' + sp.P14_nm' .* exp(-z(:)*100*rho./sp.L_nm_14)' + sp.P14_fm' .* exp(-z(:)*100*rho./sp.L_fm_14)';
 P10profile = P10profile';  P14profile = P14profile';
 
-%% debugging test compare to Knudsen
-% E = ones(size(E)).*5e-6;  % debugging
-% rho = 1.9;  % debugging test
-% P10(:,1) = 4;
-% P10(:,2) = P10(:,1).*0.015;
-% P10(:,3) = P10(:,1).*0.005;
-% 
-% att_l_10(1) = 150;          % spallation
-% att_l_10(2) = 1500;   % muon 
-% att_l_10(3) = 4320;   % muon 
-% 
-% P10 = P10(:,1)*exp(-z(:)*100*rho/att_l_10(1))' + P10(:,2).* exp(-z(:)*100*rho/att_l_10(2))'; % multiply by hundred to convert depth to cm
-% P10 = P10(:);
 %% calculate steady state starting profile %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 N10 = cell(nSamp,1);
