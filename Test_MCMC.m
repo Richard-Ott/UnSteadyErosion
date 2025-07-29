@@ -20,8 +20,8 @@ tdata = make_test_data(scenario,n);
 Nlogical = [true(n,2) false(n,1)];  % only 10Be and 14C
 
 %% Priors -----------------------------------------------------------------
-T =  [1.2e3,1.7e3]; % time of step change OR spike in yrs [min,max]
-E =  [0,8e2];      % range of expected erosion rates in mm/ka  [min,max]
+T =  [1e2,10e3]; % time of step change OR spike in yrs [min,max]
+E =  [0,5e3];      % range of expected erosion rates in mm/ka  [min,max]
 LOSS = [0,200];     % loss of soil in cm [min,max], can be commented if no spike model
 CHG  = [0, 50];     % change factor of erosion rate, can be commented if no samestep model. Also serves as scale factor for curve model
 

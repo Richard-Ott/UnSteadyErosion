@@ -13,7 +13,7 @@ switch scenario
     case 'step'
         prior_range = [time_prior; repmat(E, n*(steps+1), 1)];
         for i = 1:steps+1
-            var_names = [var_names, arrayfun(@(x) sprintf('E%d_sample%d', i, x), 1:n, 'UniformOutput', false)];
+            var_names = [var_names, arrayfun(@(x) sprintf('E%dsample%d', i, x), 1:n, 'UniformOutput', false)];
         end
     case 'samestep'
         prior_range = [time_prior; repmat(E, n, 1); repmat(CHG,steps,1)];

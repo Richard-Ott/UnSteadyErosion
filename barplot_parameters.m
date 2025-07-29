@@ -18,12 +18,7 @@ models = m(:,:); % collapse all model dimensions
 
 group_prefixes = cell(size(varnames));
 for i = 1:numel(varnames)
-    underscore_idx = strfind(varnames{i}, '_');
-    if isempty(underscore_idx)
-        group_prefixes{i} = varnames{i};  % no underscore, use full name
-    else
-        group_prefixes{i} = varnames{i}(1:underscore_idx(1)-1);  % prefix before first "_"
-    end
+    group_prefixes{i} = regexp(varnames{i}, '^[^\d]*', 'match', 'once');
 end
 
 
@@ -44,6 +39,8 @@ for g = 1:length(unique_groups)
     nexttile;
     boxchart(group_data', 'Orientation', 'horizontal');
     yticklabels(group_vars);
+    ax = gca;
+    ax.TickLabelInterpreter = 'none';
     title(unique_groups{g});
     hold on;
 
