@@ -35,6 +35,8 @@ CHG = p.Results.change_variable;
 
 nSamp = length(sp.P10spal);
 
+E = [ones(7,1)*50, linspace(1,7,7)'*500];
+
 E = E./1e6;   % convert to m/a
 T_time_spans   = [inf, diff(T')*(-1)];        % time span of every time interval between erosion changes
 
@@ -146,10 +148,10 @@ end
 
 % loop through erosion history segments
 for s = 1:nSamp
-    for t = 1:length(T)-1  
+    for t = 2:length(T) 
 
         % duration of this erosion period
-        dt = T_time_spans(t+1);
+        dt = T_time_spans(t);
 
         %initiate matrices
         K10 = sparse(Nn,Nn);
