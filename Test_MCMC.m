@@ -68,7 +68,7 @@ logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == siz
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e6,'ThinChain',5,'burnin',.2);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e5,'ThinChain',5,'burnin',.2);
 toc
 models = single(models); logLike = single(logLike); % save some memory
 
