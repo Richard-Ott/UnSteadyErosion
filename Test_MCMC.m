@@ -13,7 +13,7 @@ filetag = 'test';  % filetag for export
 % 'step',  'samestep',  'samebackground_step', 'samebackground_samestep'
 % 'spike', 'samespike', 'samebackground_spike','samebackground_samespike'
 % 'curve'
-scenario = 'curve'; 
+scenario = 'step'; 
 
 %% Test data. Use this to see if inversion can recover input
 n = 7;   % number of samples
@@ -87,7 +87,7 @@ h3 = ecornerplot(models,'ks',true,'color',[.3 .3 .3],'name',var_names,'bestmodel
 
 %% Barplot of parameters
 
-h4 = barplot_parameters(models,var_names,'bestmodel',best_model,'truevals',mtest);
+h4 = barplot_parameters(models,var_names,prior_range,'bestmodel',best_model,'truevals',mtest);
 
 %% Comparison best model and data
 
