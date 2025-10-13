@@ -157,7 +157,7 @@ elseif isfield(SAMS,'X')
 else
     error('TT.COSMO: Cannot find coordinates in sample structure!');
 end
-[out_x,out_y] = mfwdtran(DEM.georef.mstruct,LAT,LON);
+[out_x,out_y] = projfwd(DEM.georef.ProjectedCRS,LAT,LON);
 ix = out_x < max(x) & out_x > min(x) & out_y < max(y) & out_y > min(y) & flag;
 inside_x = out_x(ix);
 inside_y = out_y(ix);
@@ -203,7 +203,7 @@ for k = 1 : length(inside_ix)
         OUT(this_ix).snapdist = snapdist;
         
         % Relocated outlet
-        [latn,lonn] = minvtran(DEM.georef.mstruct,xn,yn);
+        [latn,lonn] = projinv(DEM.georef.ProjectedCRS,xn,yn);
         OUT(this_ix).OutletLat = latn;
         OUT(this_ix).OutletLon = lonn;
         OUT(this_ix).OutletX = xn;
@@ -237,7 +237,7 @@ for k = 1 : length(inside_ix)
         DB.Z = double(DB.Z);
         DB.Z(DB.Z==0) = nan;
         M = GRIDobj2polygon(DB);
-        [WSLat,WSLon] = minvtran(DB.georef.mstruct,M.X,M.Y);
+        [WSLat,WSLon] = projinv(DB.georef.ProjectedCRS,M.X,M.Y);
         OUT(this_ix).WSLon = WSLon;
         OUT(this_ix).WSLat = WSLat;
         
