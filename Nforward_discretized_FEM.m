@@ -99,8 +99,8 @@ l14 = consts.l14;
 l26 = consts.l26;
 
 % production profiles
-P10profile = sp.P10spal.*exp(-z(:)*100*rho/consts.L_sp)' + sp.P10_nm' .* exp(-z(:)*100*rho./sp.L_nm_10)' + sp.P10_fm' .* exp(-z(:)*100*rho./sp.L_fm_10)'; % multiply by hundred to convert depth to cm
-P14profile = sp.P14spal.*exp(-z(:)*100*rho/consts.L_sp)' + sp.P14_nm' .* exp(-z(:)*100*rho./sp.L_nm_14)' + sp.P14_fm' .* exp(-z(:)*100*rho./sp.L_fm_14)';
+P10profile = sp.P10spal.*exp(-z(:)*100*rho/consts.L_sp)'+ sp.P10_nm' .* exp(-z(:)*100*rho./sp.L_nm_10)' + sp.P10_fm' .* exp(-z(:)*100*rho./sp.L_fm_10)'; % multiply by hundred to convert depth to cm
+P14profile = sp.P14spal.*exp(-z(:)*100*rho/consts.L_sp)'+ sp.P14_nm' .* exp(-z(:)*100*rho./sp.L_nm_14)' + sp.P14_fm' .* exp(-z(:)*100*rho./sp.L_fm_14)';
 P10profile = P10profile';  P14profile = P14profile';
 
 %% calculate steady state starting profile %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -143,6 +143,10 @@ for s = 1:nSamp
 end
 
 %% calculate transient solution concentrations ----------------------------
+
+% T = linspace(0,1500,100);   % these lines can be used to treat numerical
+% diffusion in the code
+% T_time_spans   = [inf; diff(T')];
 
 % loop through erosion history segments
 for s = 1:nSamp
