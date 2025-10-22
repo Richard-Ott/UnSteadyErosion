@@ -71,18 +71,16 @@ end
 %% start cosmo calulcation
 
 % Geometry of profile -----------------------------------------------------
-
-D = 25;   % depth of profile (m)
-Nn = 100; % number of nodes
-z = linspace(0,1,Nn);
-z = D*z.^2; % depth node spacing
-ze = .5*(z(1:(Nn-1))+z(2:Nn));
+% geometry of depth profile (node locations) mostly defined in
+% sample_parameters.m
+z = sp.z;
+ze = .5*(sp.z(1:(Nn-1))+sp.z(2:Nn));  % element mid depth
 
 
-TOPO = [1:Nn-1;2:Nn]';  % finite element topogology
+TOPO = [1:sp.Nn-1;2:sp.Nn]';  % finite element topogology
 dl = diff(z);       
 
-Ne = Nn - 1;            % number of elements
+Ne = sp.Nn - 1;            % number of elements
 
 % useful matrices for FEM
 M1 = [1/3,1/6;1/6,1/3]; %phi*phi
@@ -99,8 +97,8 @@ l14 = consts.l14;
 l26 = consts.l26;
 
 % production profiles
-P10profile = sp.P10spal.*exp(-z(:)*100*rho/consts.L_sp)'+ sp.P10_nm' .* exp(-z(:)*100*rho./sp.L_nm_10)' + sp.P10_fm' .* exp(-z(:)*100*rho./sp.L_fm_10)'; % multiply by hundred to convert depth to cm
-P14profile = sp.P14spal.*exp(-z(:)*100*rho/consts.L_sp)'+ sp.P14_nm' .* exp(-z(:)*100*rho./sp.L_nm_14)' + sp.P14_fm' .* exp(-z(:)*100*rho./sp.L_fm_14)';
+P10profile = sp.P10spal.*exp(-z(:)*100*rho/consts.L_sp)'+ sp.P10_nm' .* exp(-z(:)*100*rho./sp.L10_nm)' + sp.P10_fm' .* exp(-z(:)*100*rho./sp.L10_fm)'; % multiply by hundred to convert depth to cm
+P14profile = sp.P14spal.*exp(-z(:)*100*rho/consts.L_sp)'+ sp.P14_nm' .* exp(-z(:)*100*rho./sp.L14_nm)' + sp.P14_fm' .* exp(-z(:)*100*rho./sp.L14_fm)';
 P10profile = P10profile';  P14profile = P14profile';
 
 %% calculate steady state starting profile %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -144,9 +142,8 @@ end
 
 %% calculate transient solution concentrations ----------------------------
 
-% T = linspace(0,1500,100);   % these lines can be used to treat numerical
-% diffusion in the code
-% T_time_spans   = [inf; diff(T')];
+T = linspace(0,1500,100);   % these lines can be used to treat numerical diffusion in the code
+T_time_spans   = [inf; diff(T')];
 
 % loop through erosion history segments
 for s = 1:nSamp
@@ -165,9 +162,9 @@ for s = 1:nSamp
         for i=1:Ne
 
           %add to stiffness matrix
-          Ke10 = (1+dt*l10)*M1*dl(i) - E(s,t)*dt*M2+dmix(i) * dt*M3/dl(i);
+          Ke10 = (1+dt*l10)*M1*dl(i) - E(s,2)*dt*M2+dmix(i) * dt*M3/dl(i);
           K10(TOPO(i,:),TOPO(i,:)) = K10(TOPO(i,:),TOPO(i,:)) + Ke10;
-          Ke14 = (1+dt*l14)*M1*dl(i) - E(s,t)*dt*M2+dmix(i)*dt*M3/dl(i);
+          Ke14 = (1+dt*l14)*M1*dl(i) - E(s,2)*dt*M2+dmix(i)*dt*M3/dl(i);
           K14(TOPO(i,:),TOPO(i,:)) = K14(TOPO(i,:),TOPO(i,:)) + Ke14;
 
           %add to Load vector
