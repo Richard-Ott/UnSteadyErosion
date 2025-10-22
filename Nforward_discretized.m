@@ -96,17 +96,26 @@ t_depths       = [fliplr(cumsum(fliplr(segment_depths(:,2:end)),2)), zeros(nSamp
 rho = consts.density;  
 
 % attentuation lengths
-att_l_10(1) = consts.L_sp;          % spallation
-att_l_10(2) = consts.L_mu_atm(4);   % muon 
-att_l_14(1) = consts.L_sp;          % spallation
-att_l_14(2) = consts.L_mu_atm(5);   % muon 
-att_l_26(1) = consts.L_sp;          % spallation
-att_l_26(2) = consts.L_mu_atm(7);   % muon 
+att_l_10(:,1) = ones(consts.L_sp,nSamp);          % spallation
+att_l_10(:,2) = sp.L10_nm;        % negative muon 
+att_l_10(:,3) = sp.L10_fm;        % fast muon 
+att_l_14(:,1) = sp.L_sp;          % spallation
+att_l_14(:,2) = sp.L14_nm;        % negative muon 
+att_l_14(:,3) = sp.L14_fm;        % fast muon 
+att_l_26(:,1) = sp.L_sp;          % spallation
+att_l_26(:,2) = sp.L26_nm;        % negative muon 
+att_l_26(:,3) = sp.L26_fm;        % fast muon 
 
 % production rates 
 P10(:,1) = sp.P10spal; 
 P14(:,1) = sp.P14spal; 
 P26(:,1) = sp.P26spal; 
+P10(:,2) = sp.P10_nm; 
+P14(:,2) = sp.P14_nm; 
+P26(:,2) = sp.P26_nm; 
+P10(:,3) = sp.P10_fm; 
+P14(:,3) = sp.P14_fm; 
+P26(:,3) = sp.P26_fm; 
 
 % do we need to calculate Alumimium (currently I run 26Al as a separate,
 % assuming that it will be the least measured nuclide, so instead of
@@ -119,8 +128,8 @@ Al = any(Nlogical(:,3));
 N10 = 0;
 N14 = 0; 
 
-% loop through production pathways (first spallation, then muons)
-for i = 1:2 
+% loop through production pathways (first spallation, then negative and fast muons)
+for i = 1:3 
     
     % segments of production profile
     N10i = 0;
@@ -131,30 +140,12 @@ for i = 1:2
         beta10 = rho .* E(:,j) ./ att_l_10(i) + consts.l10;
         beta14 = rho .* E(:,j) ./ att_l_14(i) + consts.l14;
     
-        if i==1
-            N10_segment = P10(:,1)./beta10 .* ...                    % production
-                exp(-(rho .* t_depths(:,j) ./ att_l_10(i))) .* ...    % depth cut-off
-                (1 - exp(-beta10.*T_time_spans(j)));              % time to develop the concentration profile
-            N14_segment = P14(1)./beta14 .* ...
-                exp(-(rho .* t_depths(:,j) ./ att_l_14(i))) .* ...
-                (1 - exp(-beta14.*T_time_spans(j)));
-        else 
-            % muon production
-            P10(:,2) = intNmu(E(:,j).*rho,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N10quartz); 
-            P14(:,2) = intNmu(E(:,j).*rho,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N14quartz); 
-
-            if any(isnan(P10(:,2)))   % this is necessary for very fast erosion rates that surpass the pre-calculated rates in Cronus
-                P10(:,2) = zeros(nSamp,1);
-                P14(:,2) = zeros(nSamp,1);
-            end
-
-            N10_segment = P10(:,2) .* ...                           % production, here now beta is needed because Cronus outputs total production
-                exp(-(rho .* t_depths(:,j) ./ att_l_10(2))) .* ...    % depth cut-off
-                (1 - exp(-beta10.*T_time_spans(:,j)));              % time to develop the concentration profile
-            N14_segment = P14(:,2) .* ...
-                exp(-(rho .* t_depths(:,j) ./ att_l_14(2))) .* ...
-                (1 - exp(-beta14.*T_time_spans(:,j)));
-        end
+        N10_segment = P10(:,i)./beta10 .* ...                    % production
+            exp(-(rho .* t_depths(:,j) ./ att_l_10(i))) .* ...    % depth cut-off
+            (1 - exp(-beta10.*T_time_spans(j)));              % time to develop the concentration profile
+        N14_segment = P14(1)./beta14 .* ...
+            exp(-(rho .* t_depths(:,j) ./ att_l_14(i))) .* ...
+            (1 - exp(-beta14.*T_time_spans(j)));
 
         N10i = N10i .* exp(-consts.l10.*T_time_spans(j)) + N10_segment; % add segments and don't forget decay
         N14i = N14i .* exp(-consts.l14.*T_time_spans(j)) + N14_segment; % add segments and don't forget decay       
@@ -167,24 +158,15 @@ end
 
 if Al       % calculate Al separetely assuming that it will be used the least and we run code faster if we dont calculate this
 N26=0;
-    for i = 1:2 
+    for i = 1:3 
     N26i = 0;    
     for j = 1:length(T)  % loop through erosion segments
         beta26 = rho .* E(:,j) ./ att_l_26(i) + consts.l26;
-        if i==1
-            N26_segment = P26(:,1)./beta26 .* ...                    % production
-                exp(-(rho .* t_depths(:,j) ./ att_l_26(i))) .* ...    % depth cut-off
-                (1 - exp(-beta26.*T_time_spans(j)));              % time to develop the concentration profile
-        else 
-            % muon production
-            P26(:,2) = intNmu(E(:,j).*rho,sp.pressure,Nmu.pp,Nmu.logee,Nmu.N26quartz); 
-            if any(isnan(P26(:,2)))   % this is necessary for very fast erosion rates that surpass the pre-calculated rates in Cronus
-                P26(:,2) = zeros(nSamp,1);
-            end
-            N26_segment = P26(:,2) .* ...                           % production, here now beta is needed because Cronus outputs total production
-                exp(-(rho .* t_depths(:,j) ./ att_l_26(2))) .* ...    % depth cut-off
-                (1 - exp(-beta26.*T_time_spans(:,j)));              % time to develop the concentration profile
-        end
+
+        N26_segment = P26(:,i)./beta26 .* ...                    % production
+            exp(-(rho .* t_depths(:,j) ./ att_l_26(i))) .* ...    % depth cut-off
+            (1 - exp(-beta26.*T_time_spans(j)));              % time to develop the concentration profile
+
         N26i = N26i .* exp(-consts.l26.*T_time_spans(j)) + N26_segment; % add segments and don't forget decay
     end
     N26 = N26 + N26i;
