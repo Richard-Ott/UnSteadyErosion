@@ -96,13 +96,13 @@ t_depths       = [fliplr(cumsum(fliplr(segment_depths(:,2:end)),2)), zeros(nSamp
 rho = consts.density;  
 
 % attentuation lengths
-att_l_10(:,1) = ones(consts.L_sp,nSamp);          % spallation
+att_l_10(:,1) = consts.L_sp* ones(nSamp,1);          % spallation
 att_l_10(:,2) = sp.L10_nm;        % negative muon 
 att_l_10(:,3) = sp.L10_fm;        % fast muon 
-att_l_14(:,1) = sp.L_sp;          % spallation
+att_l_14(:,1) = consts.L_sp* ones(nSamp,1);          % spallation
 att_l_14(:,2) = sp.L14_nm;        % negative muon 
 att_l_14(:,3) = sp.L14_fm;        % fast muon 
-att_l_26(:,1) = sp.L_sp;          % spallation
+att_l_26(:,1) = consts.L_sp* ones(nSamp,1);          % spallation
 att_l_26(:,2) = sp.L26_nm;        % negative muon 
 att_l_26(:,3) = sp.L26_fm;        % fast muon 
 
