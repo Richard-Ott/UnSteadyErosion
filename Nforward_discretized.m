@@ -137,14 +137,14 @@ for i = 1:3
     
     for j = 1:length(T)  % loop through erosion segments
 
-        beta10 = rho .* E(:,j) ./ att_l_10(i) + consts.l10;
-        beta14 = rho .* E(:,j) ./ att_l_14(i) + consts.l14;
+        beta10 = rho .* E(:,j) ./ att_l_10(:,i) + consts.l10;
+        beta14 = rho .* E(:,j) ./ att_l_14(:,i) + consts.l14;
     
         N10_segment = P10(:,i)./beta10 .* ...                    % production
-            exp(-(rho .* t_depths(:,j) ./ att_l_10(i))) .* ...    % depth cut-off
+            exp(-(rho .* t_depths(:,j) ./ att_l_10(:,i))) .* ...    % depth cut-off
             (1 - exp(-beta10.*T_time_spans(j)));              % time to develop the concentration profile
-        N14_segment = P14(1)./beta14 .* ...
-            exp(-(rho .* t_depths(:,j) ./ att_l_14(i))) .* ...
+        N14_segment = P14(:,i)./beta14 .* ...
+            exp(-(rho .* t_depths(:,j) ./ att_l_14(:,i))) .* ...
             (1 - exp(-beta14.*T_time_spans(j)));
 
         N10i = N10i .* exp(-consts.l10.*T_time_spans(j)) + N10_segment; % add segments and don't forget decay
@@ -161,10 +161,10 @@ N26=0;
     for i = 1:3 
     N26i = 0;    
     for j = 1:length(T)  % loop through erosion segments
-        beta26 = rho .* E(:,j) ./ att_l_26(i) + consts.l26;
+        beta26 = rho .* E(:,j) ./ att_l_26(:,i) + consts.l26;
 
         N26_segment = P26(:,i)./beta26 .* ...                    % production
-            exp(-(rho .* t_depths(:,j) ./ att_l_26(i))) .* ...    % depth cut-off
+            exp(-(rho .* t_depths(:,j) ./ att_l_26(:,i))) .* ...    % depth cut-off
             (1 - exp(-beta26.*T_time_spans(j)));              % time to develop the concentration profile
 
         N26i = N26i .* exp(-consts.l26.*T_time_spans(j)) + N26_segment; % add segments and don't forget decay
