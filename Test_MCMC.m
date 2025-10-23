@@ -30,7 +30,7 @@ CHG  = [0, 50];     % change factor of erosion rate, can be commented if no same
 
 %% Constants
 
-[consts,Nmu] = make_constants();
+consts = make_constants();
 
 %% Production rates
 
@@ -43,7 +43,7 @@ mini  = initialmodel_flatprior(prior_range,nWalks,2);
 %% Forward model (model parameters: time, erosion, CHG/Loss)
 if strcmp(scenario,'curve'); sp.curvechange = tdata.curvechange; sp.t = tdata.t;end % for curve scenarios we need to add the relative (unscaled) changes to sample parameters for erosion calculation
 
-forward_model = @(m) Nforward_wrapper(m,sp,consts,Nmu,scenario,tdata.steps,Nlogical);
+forward_model = @(m) Nforward_wrapper(m,sp,consts,scenario,tdata.steps,Nlogical);
 
 %% generate test data to see if inversion can succesfully identify these data
 

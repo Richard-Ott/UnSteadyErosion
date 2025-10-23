@@ -1,4 +1,4 @@
-function N = Nforward_discretized(E,T,sp,consts,Nmu,scenario,Nlogical,varargin)
+function N = Nforward_discretized(E,T,sp,consts,scenario,Nlogical,varargin)
 % This function calculates concentrations N10 and N14 for mutiple step 
 % changes in erosion and for multiple samples at once.
 %

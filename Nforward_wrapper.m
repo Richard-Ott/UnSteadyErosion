@@ -1,4 +1,4 @@
-function N = Nforward_wrapper(model,sp,consts,Nmu,scenario,nsteps,Nlogical)
+function N = Nforward_wrapper(model,sp,consts,scenario,nsteps,Nlogical)
 % This is a wrapper function for Nforward_discretized for easy use with the
 % MCMC algorithm.
 % Richard Ott, 2024
