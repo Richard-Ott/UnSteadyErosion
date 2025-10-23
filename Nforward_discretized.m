@@ -129,20 +129,18 @@ N10 = nan(nSamp,1);
 N14 = nan(nSamp,1);
 % runf forward model and calculate concentrations -------------------------
 for s = 1 : nSamp
-    E_init = E(s,1);        % initial steady state erosion rate
-    E_seg  = E(s,2:end);    % new erosion rates
     % 10Be
-    [N10(s), Ck10, N10_hist] = Nsample_mixing_model(P10(s,:), att_l_10(s,:), consts.l10, rho, zm, E_seg, T_time_spans(2:end), E_init);
+    [N10(s), Ck10, N10_hist] = Nsample_mixing_model(P10(s,:), att_l_10(s,:), consts.l10, rho, zm, E(s,:), T_time_spans);
 
     % 14C
-    [N14(s), Ck14, N14_hist] = Nsample_mixing_model(P14(s,:), att_l_14(s,:), consts.l14, rho, zm, E_seg, T_time_spans(2:end), E_init);
+    [N14(s), Ck14, N14_hist] = Nsample_mixing_model(P14(s,:), att_l_14(s,:), consts.l14, rho, zm, E(s,:), T_time_spans);
 end
 
 
 if Al     
     for s = 1:length(nSamp)
         % 26Al
-        [N26(s), Ck26, N26_hist] = Nsample_mixing_model(P26(s,:), att_l_26(s,:), consts.l26, rho, zm, E(s,2:end), T_time_spans(2:end), E(s,1));
+        [N26(s), Ck26, N26_hist] = Nsample_mixing_model(P26(s,:), att_l_26(s,:), consts.l26, rho, zm, E(s,:), T_time_spans);
     end
 end
 
