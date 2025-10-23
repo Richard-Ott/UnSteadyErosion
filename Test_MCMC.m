@@ -14,7 +14,7 @@ filetag = 'test';  % filetag for export
 % 'spike', 'samespike', 'samebackground_spike','samebackground_samespike'
 % 'curve'
 scenario = 'step'; 
-zm = 50;            % soil mixng depth in cm, if no mixing = 0
+zm = 0;            % soil mixng depth in cm, if no mixing = 0
 
 %% Test data. Use this to see if inversion can recover input
 n = 7;   % number of samples
