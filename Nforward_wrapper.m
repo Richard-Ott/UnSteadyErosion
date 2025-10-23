@@ -76,9 +76,9 @@ end
 %% run forward model
 
 if strcmp(scenario,'step')
-    N = Nforward_discretized(E,T,sp,consts,Nmu,scenario,Nlogical);
+    N = Nforward_discretized(E,T,sp,consts,scenario,Nlogical);
 else
-    N = Nforward_discretized(E,T,sp,consts,Nmu,scenario,Nlogical,changevar);
+    N = Nforward_discretized(E,T,sp,consts,scenario,Nlogical,changevar);
 end
 
 
