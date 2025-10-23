@@ -1,4 +1,4 @@
-function N = Nforward_wrapper(model,sp,consts,Nmu,scenario,nsteps,Nlogical)
+function N = Nforward_wrapper(model,sp,consts,zm,scenario,nsteps,Nlogical)
 % This is a wrapper function for Nforward_discretized for easy use with the
 % MCMC algorithm.
 % Richard Ott, 2024
@@ -76,9 +76,9 @@ end
 %% run forward model
 
 if strcmp(scenario,'step')
-    N = Nforward_discretized(E,T,sp,consts,Nmu,scenario,Nlogical);
+    N = Nforward_discretized(E,T,sp,consts,zm,scenario,Nlogical);
 else
-    N = Nforward_discretized(E,T,sp,consts,Nmu,scenario,Nlogical,changevar);
+    N = Nforward_discretized(E,T,sp,consts,zm,scenario,Nlogical,changevar);
 end
 
 

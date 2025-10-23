@@ -1,4 +1,4 @@
-function N = Nforward_discretized(E,T,sp,consts,Nmu,scenario,Nlogical,varargin)
+function N = Nforward_discretized(E,T,sp,consts,zm,scenario,Nlogical,varargin)
 % This function calculates concentrations N10 and N14 for mutiple step 
 % changes in erosion and for multiple samples at once.
 %
@@ -29,7 +29,7 @@ function N = Nforward_discretized(E,T,sp,consts,Nmu,scenario,Nlogical,varargin)
 
 nSamp = length(sp.P10spal);
 
-E = E./1e4;   % convert to cm/a
+E = E./1e4;   % convert to cm/yr
 T_time_spans   = [inf, diff(T')*(-1)];        % time span of every time interval between erosion changes
 
 %% reshape erosion rate array and calculate depths at steps for different scenarios
@@ -124,55 +124,30 @@ P26(:,3) = sp.P26_fm;
 % for speed in the inversion.
 Al = any(Nlogical(:,3));
 
-% calculate concentrations --------------------------------------------
-N10 = 0;
-N14 = 0; 
+% empty concentration arrays
+N10 = nan(nSamp,1);
+N14 = nan(nSamp,1);
+% runf forward model and calculate concentrations -------------------------
+for s = 1 : nSamp
+    E_init = E(s,1);        % initial steady state erosion rate
+    E_seg  = E(s,2:end);    % new erosion rates
+    % 10Be
+    [N10(s), Ck10, N10_hist] = Nsample_mixing_model(P10(s,:), att_l_10(s,:), consts.l10, rho, zm, E_seg, T_time_spans(2:end), E_init);
 
-% loop through production pathways (first spallation, then negative and fast muons)
-for i = 1:3 
-    
-    % segments of production profile
-    N10i = 0;
-    N14i = 0;
-    
-    for j = 1:length(T)  % loop through erosion segments
-
-        beta10 = rho .* E(:,j) ./ att_l_10(i) + consts.l10;
-        beta14 = rho .* E(:,j) ./ att_l_14(i) + consts.l14;
-    
-        N10_segment = P10(:,i)./beta10 .* ...                    % production
-            exp(-(rho .* t_depths(:,j) ./ att_l_10(i))) .* ...    % depth cut-off
-            (1 - exp(-beta10.*T_time_spans(j)));              % time to develop the concentration profile
-        N14_segment = P14(1)./beta14 .* ...
-            exp(-(rho .* t_depths(:,j) ./ att_l_14(i))) .* ...
-            (1 - exp(-beta14.*T_time_spans(j)));
-
-        N10i = N10i .* exp(-consts.l10.*T_time_spans(j)) + N10_segment; % add segments and don't forget decay
-        N14i = N14i .* exp(-consts.l14.*T_time_spans(j)) + N14_segment; % add segments and don't forget decay       
-    end
-
-    N10 = N10 + N10i;
-    N14 = N14 + N14i;
+    % 14C
+    [N14(s), Ck14, N14_hist] = Nsample_mixing_model(P14(s,:), att_l_14(s,:), consts.l14, rho, zm, E_seg, T_time_spans(2:end), E_init);
 end
- 
 
-if Al       % calculate Al separetely assuming that it will be used the least and we run code faster if we dont calculate this
-N26=0;
-    for i = 1:3 
-    N26i = 0;    
-    for j = 1:length(T)  % loop through erosion segments
-        beta26 = rho .* E(:,j) ./ att_l_26(i) + consts.l26;
 
-        N26_segment = P26(:,i)./beta26 .* ...                    % production
-            exp(-(rho .* t_depths(:,j) ./ att_l_26(i))) .* ...    % depth cut-off
-            (1 - exp(-beta26.*T_time_spans(j)));              % time to develop the concentration profile
-
-        N26i = N26i .* exp(-consts.l26.*T_time_spans(j)) + N26_segment; % add segments and don't forget decay
-    end
-    N26 = N26 + N26i;
+if Al     
+    for s = 1:length(nSamp)
+        % 26Al
+        [N26(s), Ck26, N26_hist] = Nsample_mixing_model(P26(s,:), att_l_26(s,:), consts.l26, rho, zm, E(s,2:end), T_time_spans(2:end), E(s,1));
     end
 end
 
+
+% format output ---------------------
 if Al
     Ncalculated = [N10;N14;N26];
 else
