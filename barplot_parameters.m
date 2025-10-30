@@ -37,7 +37,7 @@ for g = 1:length(unique_groups)
 
     % Plot
     nexttile;
-    boxchart(group_data', 'Orientation', 'horizontal');
+    boxchart(group_data', 'Orientation', 'horizontal','MarkerStyle','none');
     yticklabels(group_vars);
     ax = gca;
     ax.TickLabelInterpreter = 'none';

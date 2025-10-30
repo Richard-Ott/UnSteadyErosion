@@ -50,7 +50,7 @@ end
 
 
 %% Priors -----------------------------------------------------------------
-T   = [0,8000];      % time of step change in yrs [min,max]
+T   = [0,6000];      % time of step change in yrs [min,max]
 E1  = [10,5e3];      % old erosion rate in mm/ka  [min,max]
 CHG = [0 100];       % increase [ ] 
 LOSS = [0,300];      % loss of soil in cm [min,max], can be commented if no spike model
@@ -60,11 +60,11 @@ LOSS = [0,300];      % loss of soil in cm [min,max], can be commented if no spik
 
 %% Constants
 
-[consts,Nmu] = make_constants();
+consts = make_constants();
 
 %% Production rates
 
-sp = Cronus_v3_spallation(lat,lon,alt,consts);   % get sample parameters (surface procution, pressure)
+sp = sample_parameters(lat,lon,alt,consts);   % get sample parameters (surface procution, pressure)
 
 %% initial guess
 
@@ -73,7 +73,7 @@ mini  = initialmodel_flatprior(prior_range,nWalks);
 %% Forward model
 if strcmp(scenario,'curve'); sp.curvechange = curvechange; sp.t = t;end % for curve scenarios we need to add the relative (unscaled) changes to sample parameters for erosion calculation
 
-forward_model = @(m) Nforward_wrapper(m,sp,consts,Nmu,scenario,nsteps,Nlogical);
+forward_model = @(m) Nforward_wrapper(m,sp,consts,scenario,nsteps,Nlogical);
 
 %% log likelihood function
 % First we define a helper function equivalent to calling log(normpdf(x,mu,sigma))
@@ -86,7 +86,7 @@ logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == siz
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},5e7,'ThinChain',5,'burnin',.2,'StepSize',2.5);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e8,'ThinChain',5,'burnin',.2,'StepSize',5);
 toc
 models = single(models); logLike = single(logLike); % save some memory
 

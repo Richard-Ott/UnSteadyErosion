@@ -8,11 +8,12 @@ All models can be run for a single sample as well as a suite of data. However,
 the inversion cannot constrain meaningful results for a single sample, because there
 are less data than parameters (run isoline codes scripts for single sample).
 
+## erosion scenarios
 Currently 9 erosion scenarios are supported. There are two main scenario types:
 step-changes in erosion and erosion spikes. In step change models, the erosion rate
 changes at certain times, whereas in spike models a sudden soil loss is simulated
 by removing the upper part of the production profile. For these main scenarios, there
-are four sub-scenarios with varying degrees of freedom.All models allow multiple
+are four sub-scenarios with varying degrees of freedom. All models allow multiple
 changes in erosion through time. However, the number of parameters should be smaller
 than the number of data points (your nuclide measurements). Therefore, if you want
 to resolve a model with more than one change in erosion through time, choose a simpler
@@ -24,30 +25,50 @@ rates are allowed to vary between catchments.
 * 'samestep': a (multi-)step-change in erosion rates, where background erosion varies 
 between catchments, but erosion increases/decreases by a common factor.
 * 'samebackground_step': a (multi-)step-change in erosion rates, where all background
-erosion is the same, but catchments have different erosion rate changes
+erosion rates are the same, but catchments have different erosion rate changes
 * 'samebackground_samestep': a (multi-)step-change in erosion rates, where all background
-erosion is the same and all change factors.
+erosion rates are the same and all change factors.
 * 'spike': a (multi-)spike in soil loss at one or more times, where erosion
 rates are allowed to vary between catchments, as well as, the soil loss heights. 
 * 'samespike': a (multi-)spike soil loss, where background erosion varies 
 between catchments, but the amount of soil loss is the same.
 * 'samebackground_spike': a (multi-)spike soil loss, where all background
-erosion is the same, but catchments have soil loss.
+erosion rates are the same, but catchments have varying soil loss.
 * 'samebackground_samespike': a (multi-)spike soil loss, where all background
-erosion is the same and all soil loss heights.
+erosion rates are the same and all soil loss heights.
 * 'curve' add a curve that mimicks the changes in erosion and that gets scaled by 
 a scaling factor. In the test data we take a pollen curve, calculate the mean tree
 pollen for certain times and inversely scale this with erosion rate. The more steps
 you allow in your curve the longer the computation will take.
 
-
 ## Production rates
 Production rates are calculated based on the online calculators formerly known as
-CRONUS-Earth online calculators v3. .
+CRONUS-Earth online calculators v3. For computatinal efficiency the Stone 2000 scaling
+scheme is used, though in principle, the code could be adapted for more advanced scaling
+schemes.
+
+Muon production is calculated for every site by using the Balco 2017 model 1A with alpha = 1 and 
+calculating the full muon production depth profile. Subsequently, two expontials, 
+resembling negative muon capture and fast muons are fitted to the total muon production
+profile. Surface production rates and attenuation lengths of these expontentials are then
+used in the forward modelling of cosmogenic nuclide concentrations.
 
 Balco, G, Stone, JO, Lifton, NA, Dunai, TJ. 2008. A complete and easily accessible means 
 of calculating surface exposure ages or erosion rates from 10Be and 26Al measurements. 
 Quaternary Geochronology 3(3):174–195. https://doi.org/10.1016/j.quageo.2007.12.001 
+
+Balco, G, 2017, Production rate calculations for cosmic-ray-muon-produced 10Be and 26Al 
+benchmarked against geological calibration data, Quaternary Geochronology, 39: 150-173,
+https://doi.org/10.1016/j.quageo.2017.02.001.
+
+## Forward model
+The forward model simulates cosmogenic nuclide concentrations as a set of exponentials
+ that are being modified to depth cut-offs depending on the total amount of erosion occuring
+ during an erosion event or time period. 
+ 
+## Soil mixing
+The code can be run with and without mixing in the soil. Sol mixing is modelled as a well-mixed
+layer on top of the bedrock with a constant thickness through time. 
 
 ## Example scripts
 * 'Test_MCMC' Script that can generate test data for all erosion scenarios
@@ -69,7 +90,9 @@ This algorithm converges faster on a solution than traditional MCMC samplers in
 high-dimensional parameters space, as it is unaffected by affine tranformations 
 of space (linear transformations etc.).
 
-Goodman, J., & Weare, J. (2010). Ensemble samplers with affine invariance. Communications in Applied Mathematics and Computational Science, 5(1), 65-80. https://doi.org/10.2140/camcos.2010.5.65
+Goodman, J., & Weare, J. (2010). Ensemble samplers with affine invariance. 
+Communications in Applied Mathematics and Computational Science, 5(1), 65-80.
+ https://doi.org/10.2140/camcos.2010.5.65
 
 All Rights Reserved
 

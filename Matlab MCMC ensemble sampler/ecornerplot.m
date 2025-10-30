@@ -114,6 +114,7 @@ end
 % clf
 
 newfig = figure('Units', 'normalized', 'Position', [0.05, 0.05, 0.8, 0.8]);
+
 H=nan(M);
 for r=1:M
     for c=1:max(r,M*p.fullmatrix)

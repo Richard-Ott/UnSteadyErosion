@@ -18,9 +18,11 @@ pf1 = polyfit(zmass,log(Pmu),1);
 P1 = exp(pf1(2));
 L1 = -1./pf1(1);
 
+Pmu = double(Pmu); % sometimes this is necessary because pressure gets passed on as single which propagates into Pmu data type
+
 % Starting guess
 options = optimset('MaxFunEvals',50000);
-x0 = [P1/1.5 P1/3 L1/2 L1.*1.5]; %[neg_P fast_P neg_L fast_L]
+x0 = double([P1/1.5 P1/3 L1/2 L1.*1.5]); %[neg_P fast_P neg_L fast_L]
 xopt = fminsearch(@(x) sum(((x(1).*exp(-zmass./x(3)) + x(2).*exp(-zmass./x(4)))-Pmu).^2),x0,options);
 
 % assign output
