@@ -2,10 +2,17 @@ clear
 clc
 close all
 
-addpath('.\online-calculators-v3\')
-addpath('.\Matlab MCMC ensemble sampler\')
 
-nWalks = 25;       % how many MCMC chains?
+filePath = matlab.desktop.editor.getActiveFilename;
+ix = strfind(filePath,filesep);
+basepath = filePath(1:ix(end));
+cd(basepath)
+addpath(genpath(basepath))
+
+% addpath(genpath('.\online-calculators-v3\'))
+% addpath(genpath('.\Matlab MCMC ensemble sampler\'))
+
+nWalks = 30;       % how many MCMC chains?
 export = 0;        % do you want to export the data and plots?
 filetag = 'test';  % filetag for export
 
