@@ -8,6 +8,7 @@ addpath('.\Matlab MCMC ensemble sampler\')
 nWalks = 25;       % how many MCMC chains?
 export = 0;        % do you want to export the data and plots?
 filetag = 'test';  % filetag for export
+mccount = 1e8;
 
 % choose one of these erosion scenarios: 
 % 'step',  'samestep',  'samebackground_step', 'samebackground_samestep'
@@ -62,7 +63,7 @@ logical_prior = @(m) sum(and(m > prior_range(:,1), m < prior_range(:,2))) == siz
 
 %% Posterior sampling
 tic
-[models, logLike] = gwmcmc(mini,{logical_prior logLike},1e6,'ThinChain',5,'burnin',.2);
+[models, logLike] = gwmcmc(mini,{logical_prior logLike},mccount,'ThinChain',5,'burnin',.2);
 toc
 models = single(models); logLike = single(logLike); % save some memory
 
