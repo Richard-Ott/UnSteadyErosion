@@ -2,8 +2,11 @@ clear
 clc
 close all
 
-addpath('.\online-calculators-v3\')
-addpath('.\Matlab MCMC ensemble sampler\')
+filePath = matlab.desktop.editor.getActiveFilename;
+ix = strfind(filePath,filesep);
+basepath = filePath(1:ix(end));
+cd(basepath)
+addpath(genpath(basepath))
 
 nWalks = 25;       % how many MCMC chains?
 export = 0;        % do you want to export the data and plots?
@@ -14,8 +17,8 @@ mccount = 1e8;
 % 'step',  'samestep',  'samebackground_step', 'samebackground_samestep'
 % 'spike', 'samespike', 'samebackground_spike','samebackground_samespike'
 % 'curve'
-scenario = 'step'; 
-zm = 50;            % soil mixng depth in cm, if no mixing = 0
+scenario = 'spike'; 
+zm = 0;            % soil mixng depth in cm, if no mixing = 0
 
 %% Test data. Use this to see if inversion can recover input
 n = 7;   % number of samples
